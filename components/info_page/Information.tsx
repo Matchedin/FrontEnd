@@ -6,7 +6,7 @@ import InfoAnimation from './InfoAnimation';
 
 export default function Information() {
   return (
-    <div style={{ display: 'flex', gap: '48px', padding: '48px', maxWidth: '1400px', margin: '0 auto', alignItems: 'stretch' }}>
+    <div style={{ display: 'flex', gap: '48px', padding: '48px', maxWidth: '1400px', margin: '0 auto', alignItems: 'stretch', marginTop: '60px' }}>
       {/* Left side - Form */}
       <div
         style={{

@@ -43,53 +43,63 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [animationProgress, setAnimationProgress] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [expandAnimationStartTime, setExpandAnimationStartTime] = useState<number | null>(null);
+  // separate progress values so we don't restart the entire animation on expand/collapse
+  const [initialAnimationProgress, setInitialAnimationProgress] = useState(0); // for ranks 1-25
+  const [extraAnimationProgress, setExtraAnimationProgress] = useState(0); // for ranks 26-50
+  const [extraAnimationState, setExtraAnimationState] = useState<'idle' | 'entering' | 'exiting'>('idle');
   
-  // Create mockConnections dynamically based on expanded state
-  const mockConnections = useMemo(() => {
-    const maxRank = isExpanded ? 50 : 25;
-    return mockPersonsData.slice(0, maxRank).map(person => ({
-      name: person.name,
-      current_company: person.current_company,
-      rank: person.rank
-    }));
-  }, [isExpanded]);
+  // Use the full list (up to 50) for position calculations but control rendering
+  const allConnections = useMemo(() => mockPersonsData.slice(0, 50), []);
   
   // Find selected node based on person name
-  const selectedNode = selectedPersonName ? 
-    mockConnections.find(p => p.name === selectedPersonName) 
-    : null;
+  const selectedNode = selectedPersonName ? allConnections.find(p => p.name === selectedPersonName) : null;
     
   const containerSize = 1000;
   const centerX = containerSize / 2;
   const centerY = containerSize / 2;
 
-  // Animate nodes popping in from center
+  // Initial mount animation for ranks 1-25
   React.useEffect(() => {
-    let animationFrameId: number;
-    let startTime: number | null = expandAnimationStartTime;
+    let raf = 0;
+    let start: number | null = null;
+    const duration = 5000;
+    const tick = () => {
+      if (start === null) start = Date.now();
+      const elapsed = Date.now() - start;
+      const p = Math.min(elapsed / duration, 1);
+      setInitialAnimationProgress(p);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
-    const animate = () => {
-      if (startTime === null) {
-        startTime = Date.now();
-      }
-      
-      // Increase duration to 5 seconds to handle 50+ nodes with proper stagger timing
-      const duration = 5000;
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      setAnimationProgress(progress);
-
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
+  // Extra animation for ranks 26-50 (entering / exiting)
+  React.useEffect(() => {
+    if (extraAnimationState === 'idle') return;
+    let raf = 0;
+    let start: number | null = null;
+    const duration = 1200;
+    const tick = () => {
+      if (start === null) start = Date.now();
+      const elapsed = Date.now() - start;
+      let p = Math.min(elapsed / duration, 1);
+      if (extraAnimationState === 'exiting') p = 1 - p;
+      setExtraAnimationProgress(p);
+      if (elapsed < duration) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        // finalize states
+        if (extraAnimationState === 'exiting') {
+          setIsExpanded(false);
+        }
+        setExtraAnimationState('idle');
       }
     };
-
-    animationFrameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [expandAnimationStartTime]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [extraAnimationState]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -132,9 +142,9 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
     setOffset({ x: newOffsetX, y: newOffsetY });
   };
 
-  // Calculate positions for all nodes
+  // Calculate positions for all nodes (use full set up to 50)
   const positions = useMemo<NodePosition[]>(() => {
-    return mockConnections.map((person) => {
+    return allConnections.map((person) => {
       // Create a smooth spiral with consistent spacing between nodes
       // Rank 1 starts at top center and spirals outward
       
@@ -197,7 +207,7 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
         distance: finalDistance
       };
     });
-  }, [centerX, centerY, mockConnections]);
+  }, [centerX, centerY, allConnections]);
 
   return (
     <div style={{ display: 'flex', flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -237,32 +247,35 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
         >
           {/* Draw connecting lines from center to each person */}
           {positions.map((pos, idx) => {
-            // Calculate line animation based on node animation
+            // Calculate line animation based on per-section progress
             let nodeStartTime = 0;
             let nodeEndTime = 0;
-            
+            let lineAnimationProgress = 0;
+
             if (pos.rank <= 25) {
-              // Original nodes
               const totalConnections = 25;
               const animationDuration = 0.12;
               const totalRequiredDuration = 1.0 + animationDuration;
               const staggerDelay = (pos.rank - 1) / (totalRequiredDuration * totalConnections);
               nodeStartTime = staggerDelay;
-              nodeEndTime = Math.min(staggerDelay + 0.02, 1.0);
-            } else if (isExpanded && expandAnimationStartTime) {
-              // New nodes
+              nodeEndTime = Math.min(staggerDelay + animationDuration, 1.0);
+              if (initialAnimationProgress >= nodeStartTime) {
+                lineAnimationProgress = Math.min((initialAnimationProgress - nodeStartTime) / (nodeEndTime - nodeStartTime), 1);
+              }
+            } else {
+              // ranks 26-50 use the extra animation progress
+              // only draw lines for these nodes if expanded or in the middle of an enter/exit animation
+              if (!(isExpanded || extraAnimationState !== 'idle' || extraAnimationProgress > 0)) {
+                return null;
+              }
               const newNodeIndex = pos.rank - 25;
               const newNodesCount = 25;
-              const animationDuration = 0.12;
-              const totalRequiredDuration = 1.0 + animationDuration;
-              const staggerDelay = 0.85 + (newNodeIndex - 1) / (totalRequiredDuration * newNodesCount);
-              nodeStartTime = Math.min(staggerDelay, 0.98);
-              nodeEndTime = Math.min(nodeStartTime + 0.02, 1.0);
-            }
-            
-            let lineAnimationProgress = 0;
-            if (animationProgress >= nodeStartTime) {
-              lineAnimationProgress = Math.min((animationProgress - nodeStartTime) / (nodeEndTime - nodeStartTime), 1);
+              const staggerDelay = (newNodeIndex - 1) / newNodesCount;
+              nodeStartTime = staggerDelay;
+              nodeEndTime = Math.min(staggerDelay + 0.12, 1.0);
+              if (extraAnimationProgress >= nodeStartTime) {
+                lineAnimationProgress = Math.min((extraAnimationProgress - nodeStartTime) / (nodeEndTime - nodeStartTime), 1);
+              }
             }
             
             // Calculate line length for stroke animation
@@ -331,37 +344,42 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
         {/* Connected Nodes */}
         {positions.map((pos, idx) => {
           // Calculate when this node should animate in (staggered)
-          // For new nodes (26-50), only animate after expand happens
+          // For new nodes (26-50), only animate when expanded or during extra animation
           let nodeStartTime = 0;
           let nodeEndTime = 0;
-          
+
+          // Determine if this node should be visible and at what stage
+          let nodeAnimationProgress = 0;
+          let isVisible = false;
+
           if (pos.rank <= 25) {
-            // Original nodes: distribute across full duration
             const totalConnections = 25;
             const animationDuration = 0.12;
             const totalRequiredDuration = 1.0 + animationDuration;
             const staggerDelay = (pos.rank - 1) / (totalRequiredDuration * totalConnections);
             nodeStartTime = staggerDelay;
             nodeEndTime = Math.min(staggerDelay + animationDuration, 1.0);
-          } else if (isExpanded && expandAnimationStartTime) {
-            // New nodes: start from expand time and animate in sequence after the first 25
-            // Delay new nodes to start after original 25 are complete (around 85% progress)
+
+            if (initialAnimationProgress >= nodeStartTime) {
+              isVisible = true;
+              nodeAnimationProgress = Math.min((initialAnimationProgress - nodeStartTime) / (nodeEndTime - nodeStartTime), 1);
+            }
+          } else {
+            // ranks 26-50 use the extra animation progress
+            if (!(isExpanded || extraAnimationState !== 'idle' || extraAnimationProgress > 0)) {
+              return null;
+            }
+
             const newNodeIndex = pos.rank - 25; // 1-25 for the new nodes
             const newNodesCount = 25;
-            const animationDuration = 0.12;
-            const totalRequiredDuration = 1.0 + animationDuration;
-            const staggerDelay = 0.85 + (newNodeIndex - 1) / (totalRequiredDuration * newNodesCount); // Start at 85%
-            nodeStartTime = Math.min(staggerDelay, 0.98);
-            nodeEndTime = Math.min(nodeStartTime + animationDuration, 1.0);
-          }
-          
-          // Determine if this node should be visible and at what stage
-          let nodeAnimationProgress = 0;
-          let isVisible = false;
-          
-          if (animationProgress >= nodeStartTime) {
-            isVisible = true;
-            nodeAnimationProgress = Math.min((animationProgress - nodeStartTime) / (nodeEndTime - nodeStartTime), 1);
+            const staggerDelay = (newNodeIndex - 1) / newNodesCount;
+            nodeStartTime = staggerDelay;
+            nodeEndTime = Math.min(staggerDelay + 0.12, 1.0);
+
+            if (extraAnimationProgress >= nodeStartTime) {
+              isVisible = true;
+              nodeAnimationProgress = Math.min((extraAnimationProgress - nodeStartTime) / (nodeEndTime - nodeStartTime), 1);
+            }
           }
           
           // Interpolate from center to final position
@@ -440,9 +458,10 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
         {!isExpanded && (
           <button
             onClick={() => {
-              // Continue animation from current progress, so new nodes animate in
-              setExpandAnimationStartTime(Date.now() - (animationProgress * 5000));
+              // Start extra enter animation for nodes 26-50
               setIsExpanded(true);
+              setExtraAnimationProgress(0);
+              setExtraAnimationState('entering');
             }}
             style={{
               position: 'absolute',
@@ -490,7 +509,9 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
               zIndex: 50
             }}
             onClick={() => {
-              setIsExpanded(false);
+              // Animate extra nodes out, then effect will setIsExpanded(false)
+              setExtraAnimationProgress(1);
+              setExtraAnimationState('exiting');
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 16px rgba(196, 65, 185, 0.35)';
