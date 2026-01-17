@@ -95,7 +95,7 @@ export default function About() {
 
 						{/* CTA Buttons */}
 						<div className="flex flex-col sm:flex-row gap-4">
-							<Link
+							<a
 								href="#connect"
 								className="group inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5"
 							>
@@ -108,7 +108,7 @@ export default function About() {
 								>
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
 								</svg>
-							</Link>
+							</a>
 						</div>
 					</div>
 				</div>
