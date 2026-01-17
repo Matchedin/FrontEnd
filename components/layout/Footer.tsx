@@ -4,14 +4,14 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-transparent border-t border-white/20 py-8 px-6">
+    <footer className="w-full bg-gradient-to-br from-[#140840] via-[#1a0d4d] to-[#0f0630] border-t border-indigo-500/20 py-12 px-6">
       <div className="max-w-6xl mx-auto">
         {/* Top Section */}
         <div className="grid grid-cols-3 gap-8 mb-8">
           {/* Column 1 - About */}
           <div>
             <h3 className="text-white font-bold text-lg mb-4">About</h3>
-            <p className="text-white/70 text-sm">
+            <p className="text-white/70 text-sm pr-25">
               MatchedIn connects you with opportunities and people who share your passions.
             </p>
           </div>

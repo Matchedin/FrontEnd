@@ -3,6 +3,7 @@ import Header from "../components/layout/Header"
 import Hero from "../components/layout/Hero"
 import About from "../components/sections/About"
 import Connect from "../components/sections/Connect"
+import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
       <Hero></Hero>
       <About></About>
       <Connect></Connect>
+      <Footer></Footer>
     </>
   );
 }
