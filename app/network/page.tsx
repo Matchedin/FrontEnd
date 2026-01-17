@@ -4,10 +4,12 @@ import Connections from "../../components/network_page/Connections";
 
 export default function NetworkPage() {
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full h-screen overflow-hidden flex flex-col">
       <Header />
-      <PersonCard></PersonCard>
-      <Connections></Connections>
+      <div className="flex flex-1 overflow-hidden">
+        <PersonCard />
+        <Connections />
+      </div>
     </div>
   );
 }
