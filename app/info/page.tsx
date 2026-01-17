@@ -1,15 +1,11 @@
-import Image from "next/image";
 import Header from "../../components/layout/Header"
-import Hero from "../../components/layout/Hero"
-import About from "../../components/sections/About"
-import Connect from "../../components/sections/Connect"
+import Information from "../../components/info_page/Information"
 
-export default function Home() {
+export default function InfoPage() {
   return (
-    <>
-    <body>
-        
-    </body>
-    </>
+    <div className="w-full overflow-hidden">
+      <Header />
+      <Information />
+    </div>
   );
 }
