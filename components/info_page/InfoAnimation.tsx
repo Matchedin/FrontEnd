@@ -17,7 +17,7 @@ export default function InfoAnimation() {
 
   // Initialize nodes
   useEffect(() => {
-    const nodeCount = 12;
+    const nodeCount = 24;
     const initialNodes: Node[] = Array.from({ length: nodeCount }, (_, i) => ({
       id: i,
       x: Math.random() * 400,
