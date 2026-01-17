@@ -27,10 +27,12 @@ export default function Information() {
           display: 'flex',
           flexDirection: 'column',
           minHeight: '600px',
-          borderRadius: '12px',
+          borderRadius: '16px',
           overflow: 'hidden',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          backgroundColor: '#f9fafb'
+          background: 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(69, 103, 204, 0.2)',
+          boxShadow: '0 8px 32px rgba(69, 103, 204, 0.1)'
         }}
       >
         <InfoAnimation />

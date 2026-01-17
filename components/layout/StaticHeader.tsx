@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 
 export default function Header() {
 
@@ -14,6 +13,7 @@ export default function Header() {
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+      style={{paddingTop: '5px', paddingBottom: '5px'}}
     >
       {/* Background layer that fades in */}
       <div 

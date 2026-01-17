@@ -92,9 +92,9 @@ export default function Header() {
         {/* Center - Logo/Title */}
         <div className="absolute left-1/2 -translate-x-1/2 text-3xl animate-float">
           <h1 className="m-0 font-bold -tracking-wide bg-gradient-to-br from-white via-indigo-100 to-white bg-[length:200%_200%] bg-clip-text text-transparent animate-shimmer">
-            <a href="/#">
+            <Link href="/">
               MatchedIn
-            </a>
+            </Link>
           </h1>
         </div>
 

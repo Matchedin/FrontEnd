@@ -59,11 +59,13 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
   const centerX = containerSize / 2;
   const centerY = containerSize / 2;
 
+  // Fit / recenter helpers (defined after positions)
+
   // Initial mount animation for ranks 1-25
   React.useEffect(() => {
     let raf = 0;
     let start: number | null = null;
-    const duration = 5000;
+    const duration = 1000;
     const tick = () => {
       if (start === null) start = Date.now();
       const elapsed = Date.now() - start;
@@ -74,6 +76,15 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  
+
+  // Right-side modal visibility (slides on/off). Keep selection separate.
+  const [panelVisible, setPanelVisible] = useState<boolean>(!!selectedNode);
+  React.useEffect(() => {
+    setPanelVisible(!!selectedNode);
+  }, [selectedNode]);
+  const panelWidth = 320; // keep in sync with panel width
 
   // Extra animation for ranks 26-50 (entering / exiting)
   React.useEffect(() => {
@@ -131,8 +142,8 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
     const canvasY = (-offset.y + viewportCenterY) / zoom;
 
     // Calculate new zoom
-    const zoomSpeed = 0.1;
-    const newZoom = Math.max(0.5, Math.min(3, zoom - (e.deltaY > 0 ? zoomSpeed : -zoomSpeed)));
+    const zoomSpeed = 0.2;
+    const newZoom = Math.max(0.05, Math.min(3, zoom - (e.deltaY > 0 ? zoomSpeed : -zoomSpeed)));
 
     // Adjust offset to keep the same canvas point at viewport center
     const newOffsetX = -(canvasX * newZoom - viewportCenterX);
@@ -158,7 +169,8 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
       // Calculate radius for this node with extended scaling for 26-50
       // Ranks 1-15: increase 10px per node
       // Ranks 16-25: increase 5px per node
-      // Ranks 26-50: increase 3px per node (slower expansion)
+      // Ranks 26-38: increase 6px per node (moderate expansion)
+      // Ranks 39-50: increase 3px per node (slow final expansion)
       let distance;
       if (person.rank <= 15) {
         distance = startDistance + (person.rank - 1) * 10;
@@ -167,7 +179,12 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
         distance = rank15Distance + (person.rank - 15) * 5;
       } else {
         const rank25Distance = startDistance + (15 - 1) * 10 + (25 - 15) * 5;
-        distance = rank25Distance + (person.rank - 25) * 3;
+        if (person.rank <= 38) {
+          distance = rank25Distance + (person.rank - 25) * 6;
+        } else {
+          const rank38Distance = rank25Distance + (38 - 25) * 6;
+          distance = rank38Distance + (person.rank - 38) * 3;
+        }
       }
       
       // Calculate angle increment to maintain consistent arc length
@@ -183,7 +200,12 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
           r = rank15Distance + (i - 15) * 5;
         } else {
           const rank25Distance = startDistance + (15 - 1) * 10 + (25 - 15) * 5;
-          r = rank25Distance + (i - 25) * 3;
+          if (i <= 38) {
+            r = rank25Distance + (i - 25) * 6;
+          } else {
+            const rank38Distance = rank25Distance + (38 - 25) * 6;
+            r = rank38Distance + (i - 38) * 3;
+          }
         }
         totalAngle += targetArcLength / r;
       }
@@ -208,6 +230,90 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
       };
     });
   }, [centerX, centerY, allConnections]);
+
+  // Fit / recenter helper: compute bounding box of current `positions`
+  const fitToRanks = React.useCallback((maxRank: number) => {
+    const visible = positions.filter(p => p.rank <= maxRank);
+    if (visible.length === 0) return;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    visible.forEach(p => {
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+    });
+
+    // add padding around bbox
+    const padding = 160; // in canvas units
+    const bboxW = Math.max(1, maxX - minX + padding);
+    const bboxH = Math.max(1, maxY - minY + padding);
+
+    // compute zoom to fit bbox into container
+    const fitZoom = Math.max(0.35, Math.min(3, Math.min(containerSize / bboxW, containerSize / bboxH)));
+
+    const centerCanvasX = (minX + maxX) / 2;
+    const centerCanvasY = (minY + maxY) / 2;
+
+    // Adjust viewport center: always account for panel width so spiral is pre-centered
+    // When panel closes, shift right; when panel opens, stay centered
+    const effectiveViewportCenterX = centerX + (!panelVisible ? panelWidth / 2 : 0);
+
+    const newOffsetX = -(centerCanvasX * fitZoom - effectiveViewportCenterX);
+    const newOffsetY = -(centerCanvasY * fitZoom - centerY);
+
+    setZoom(fitZoom);
+    setOffset({ x: newOffsetX, y: newOffsetY });
+  }, [positions, centerX, centerY, containerSize, panelVisible, panelWidth]);
+
+  // Zoom to focus on a specific node with smooth animation
+  const zoomToNode = React.useCallback((nodePosition: NodePosition) => {
+    const zoomLevel = 2; // Close-up zoom level
+    const animationDuration = 800; // Duration in ms
+    
+    // Center on the node, accounting for panel width
+    const effectiveViewportCenterX = centerX + (!panelVisible ? panelWidth / 2 : 0);
+    
+    const targetOffsetX = -(nodePosition.x * zoomLevel - effectiveViewportCenterX);
+    const targetOffsetY = -(nodePosition.y * zoomLevel - centerY);
+    
+    // Store start values
+    const startZoom = zoom;
+    const startOffsetX = offset.x;
+    const startOffsetY = offset.y;
+    
+    let raf = 0;
+    let start: number | null = null;
+    
+    const tick = () => {
+      if (start === null) start = Date.now();
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / animationDuration, 1);
+      
+      // Smooth easing function (ease-out cubic)
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      
+      const currentZoom = startZoom + (zoomLevel - startZoom) * easeProgress;
+      const currentOffsetX = startOffsetX + (targetOffsetX - startOffsetX) * easeProgress;
+      const currentOffsetY = startOffsetY + (targetOffsetY - startOffsetY) * easeProgress;
+      
+      setZoom(currentZoom);
+      setOffset({ x: currentOffsetX, y: currentOffsetY });
+      
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [centerX, centerY, panelVisible, panelWidth, zoom, offset]);
+
+  // Center on initial load to ranks 1-25
+  React.useEffect(() => {
+    const t = setTimeout(() => fitToRanks(25), 50);
+    return () => clearTimeout(t);
+  }, [fitToRanks]);
 
   return (
     <div style={{ display: 'flex', flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -394,7 +500,7 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
           const nodeSize = pos.rank === 1 ? 90 : 70;
           const nodeOffset = nodeSize / 2;
           
-          return (
+            return (
           <div
             key={idx}
             style={{
@@ -425,7 +531,11 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
               opacity: isVisible ? opacity : 0,
               transform: `scale(${scale})`,
             }}
-            onClick={() => onSelectPerson(pos.name)}
+            onClick={() => {
+              onSelectPerson(pos.name);
+              setPanelVisible(true);
+              zoomToNode(pos);
+            }}
             onMouseEnter={(e) => {
               if (isVisible) {
                 const element = e.currentTarget as HTMLElement;
@@ -462,6 +572,8 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
               setIsExpanded(true);
               setExtraAnimationProgress(0);
               setExtraAnimationState('entering');
+              // recenter & zoom to fit expanded set
+              setTimeout(() => fitToRanks(50), 50);
             }}
             style={{
               position: 'absolute',
@@ -476,16 +588,15 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
               fontWeight: '600',
               fontSize: '0.9rem',
               boxShadow: '0 4px 12px rgba(69, 103, 204, 0.2)',
-              transition: 'all 0.3s ease',
-              zIndex: 50
+              transition: 'box-shadow 0.3s ease, transform 300ms cubic-bezier(0.2,0.8,0.2,1)',
+              transform: panelVisible ? `translateX(-${panelWidth}px)` : 'translateX(0)',
+              zIndex: 70
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 16px rgba(69, 103, 204, 0.35)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(69, 103, 204, 0.2)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
             }}
           >
             Expand Connections (26-50)
@@ -505,21 +616,22 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
               cursor: 'pointer',
               fontWeight: '600',
               boxShadow: '0 4px 12px rgba(196, 65, 185, 0.2)',
-              transition: 'all 0.3s ease',
-              zIndex: 50
+              transition: 'box-shadow 0.3s ease, transform 300ms cubic-bezier(0.2,0.8,0.2,1)',
+              transform: panelVisible ? `translateX(-${panelWidth}px)` : 'translateX(0)',
+              zIndex: 70
             }}
             onClick={() => {
               // Animate extra nodes out, then effect will setIsExpanded(false)
               setExtraAnimationProgress(1);
               setExtraAnimationState('exiting');
+              // recenter & zoom to fit collapsed set
+              setTimeout(() => fitToRanks(25), 50);
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 16px rgba(196, 65, 185, 0.35)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(196, 65, 185, 0.2)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
             }}
           >
             Collapse Connections
@@ -527,28 +639,52 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
         )}
       </div>
 
-      {/* Right Detail Panel */}
-      {selectedNode && (
-        <div
-          style={{
-            width: '300px',
-            background: 'rgba(255, 255, 255, 0.75)',
-            backdropFilter: 'blur(10px)',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.3)',
-            padding: '24px',
-            overflowY: 'auto',
-            boxShadow: '-8px 0 32px rgba(69, 103, 204, 0.1)'
-          }}
-        >
+      {/* Right Detail Panel (always rendered; slides on/off) */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          height: '100%',
+          width: '320px',
+          transform: panelVisible ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 300ms cubic-bezier(0.2,0.8,0.2,1)',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderLeft: '1px solid rgba(0,0,0,0.05)',
+          boxShadow: panelVisible ? '-8px 0 32px rgba(69, 103, 204, 0.08)' : 'none',
+          zIndex: 60,
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>Details</div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => setPanelVisible(false)}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
           {(() => {
-            const person = mockPersonsData.find(p => p.name === selectedNode.name);
+            const person = selectedNode ? mockPersonsData.find(p => p.name === selectedNode.name) : null;
             return person ? (
               <>
-                <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(69, 103, 204, 0.1)' }}>
+                <div style={{ marginTop: '10px', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(69, 103, 204, 0.06)' }}>
                   <h2 style={{ 
                     fontSize: '1.25rem', 
                     fontWeight: 'bold', 
-                    margin: '0 0 4px 0',
+                    margin: '30px 0 4px 0',
                     background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -677,10 +813,12 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
                   </button>
                 </div>
               </>
-            ) : null;
+            ) : (
+              <div style={{ color: '#6b7280' }}>Select a person to see details.</div>
+            );
           })()}
         </div>
-      )}
+      </div>
     </div>
   );
 }

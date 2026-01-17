@@ -62,64 +62,76 @@ export default function InfoForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '8px', color: 'var(--primary)' }}>
+        <h1 style={{ 
+          fontSize: '2rem', 
+          fontWeight: 'bold', 
+          marginBottom: '8px',
+          background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
           Tell Us About Yourself
         </h1>
-        <p style={{ fontSize: '1rem', color: '#6b7280' }}>
+        <p style={{ fontSize: '1rem', color: 'rgba(32, 32, 32, 0.7)' }}>
           Upload your resume and we will build your network profile
         </p>
       </div>
 
       {/* Name Input */}
-      <div>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--foreground)' }}>
-          Full Name *
-        </label>
+      <div style={{paddingBottom: '10px'}}>
         <Input
           type="text"
-          placeholder="John Doe"
+          label="Full Name"
           value={formData.name}
           onChange={(e) => setFormData(prev => ({ ...prev, name: (e.target as HTMLInputElement).value }))}
           variant="outlined"
+          required
         />
       </div>
 
       {/* School Input */}
       <div>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--foreground)' }}>
-          School/University *
-        </label>
         <Input
           type="text"
-          placeholder="Stanford University"
+          label="School/University"
           value={formData.school}
           onChange={(e) => setFormData(prev => ({ ...prev, school: (e.target as HTMLInputElement).value }))}
           variant="outlined"
+          required
         />
       </div>
 
       {/* Resume Upload */}
       <div>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--foreground)' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--primary)', fontSize: '0.95rem' }}>
           Upload Resume (DOCX) *
         </label>
         <div
           style={{
-            border: '2px dashed var(--primary)',
-            borderRadius: '8px',
+            border: '2px solid rgba(69, 103, 204, 0.3)',
+            borderRadius: '12px',
             padding: '32px',
             textAlign: 'center',
             cursor: 'pointer',
-            transition: 'all 0.2s',
-            backgroundColor: formData.resume ? 'var(--primary)' : '#f9fafb'
+            transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            backgroundColor: formData.resume ? 'rgba(69, 103, 204, 0.15)' : 'rgba(255, 255, 255, 0.4)',
+            backdropFilter: 'blur(10px)',
+            background: formData.resume 
+              ? 'linear-gradient(135deg, rgba(69, 103, 204, 0.15) 0%, rgba(196, 65, 185, 0.1) 100%)'
+              : 'rgba(255, 255, 255, 0.4)',
+            boxShadow: 'inset 0 0 20px rgba(69, 103, 204, 0.05)'
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)';
-            (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(69, 103, 204, 0.6)';
+            (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+            (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(69, 103, 204, 0.2) 0%, rgba(196, 65, 185, 0.15) 100%)';
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = 'var(--primary)';
-            (e.currentTarget as HTMLElement).style.backgroundColor = formData.resume ? 'var(--primary)' : '#f9fafb';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(69, 103, 204, 0.3)';
+            (e.currentTarget as HTMLElement).style.background = formData.resume 
+              ? 'linear-gradient(135deg, rgba(69, 103, 204, 0.15) 0%, rgba(196, 65, 185, 0.1) 100%)'
+              : 'rgba(255, 255, 255, 0.4)';
           }}
         >
           <input
@@ -137,10 +149,10 @@ export default function InfoForm() {
             }}
           >
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📄</div>
-            <div style={{ fontSize: '1rem', fontWeight: '500', color: formData.resume ? 'white' : 'var(--foreground)', marginBottom: '4px' }}>
+            <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--primary)', marginBottom: '4px' }}>
               {formData.resume ? formData.resume.name : 'Click to upload or drag and drop'}
             </div>
-            <div style={{ fontSize: '0.875rem', color: formData.resume ? 'rgba(255,255,255,0.8)' : '#6b7280' }}>
+            <div style={{ fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
               DOCX files only
             </div>
           </label>

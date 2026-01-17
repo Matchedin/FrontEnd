@@ -45,7 +45,7 @@ export default function InfoAnimation() {
       canvas.height = canvas.offsetHeight;
 
       // Clear canvas
-      ctx.fillStyle = '#f9fafb';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Update progress (0 to 1)
@@ -176,34 +176,36 @@ export default function InfoAnimation() {
           width: '100%',
           height: '100%',
           borderRadius: '8px',
-          background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)'
+          background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.05) 0%, rgba(196, 65, 185, 0.03) 100%)'
         }}
       />
       <div
         style={{
           position: 'absolute',
           bottom: '32px',
+          left: '32px',
+          right: '32px',
           textAlign: 'center'
         }}
       >
-        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+        <div style={{ fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.7)', marginBottom: '8px' }}>
           Building your network...
         </div>
         <div
           style={{
-            width: '200px',
+            width: '100%',
             height: '4px',
-            backgroundColor: '#e5e7eb',
+            background: 'rgba(69, 103, 204, 0.1)',
             borderRadius: '2px',
-            marginTop: '8px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            border: '1px solid rgba(69, 103, 204, 0.2)'
           }}
         >
           <div
             style={{
               width: `${animationProgress * 100}%`,
               height: '100%',
-              backgroundColor: 'var(--primary)',
+              background: 'linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%)',
               transition: 'width 0.1s linear'
             }}
           />
