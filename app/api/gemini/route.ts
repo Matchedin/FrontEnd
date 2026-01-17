@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { profile, resume } = await request.json();
+    const formData = await request.formData();
+    const resume = formData.get('resume') as File | null;
+    const profileString = formData.get('profile') as string | null;
 
-    if (!profile || !resume) {
+    if (!profileString || !resume) {
       return NextResponse.json(
         { error: 'Profile and resume are required' },
         { status: 400 }
@@ -13,12 +15,13 @@ export async function POST(request: NextRequest) {
 
     const apiUrl = process.env.SSE_BASE_URL + '/gemini/coldEmail';
 
+    const forwardFormData = new FormData();
+    forwardFormData.append('resume', resume);
+    forwardFormData.append('profile', profileString);
+
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ profile, resume }),
+      body: forwardFormData,
     });
 
     if (!response.ok) {
