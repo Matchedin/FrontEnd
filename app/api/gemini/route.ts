@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(profile: string, resume: File) {
   try {
-    const formData = await request.formData();
-    const resume = formData.get('resume') as File | null;
-    const profileString = formData.get('profile') as string | null;
-
-    if (!profileString || !resume) {
+    if (!profile || !resume) {
       return NextResponse.json(
         { error: 'Profile and resume are required' },
         { status: 400 }
       );
     }
 
-    const apiUrl = process.env.SSE_BASE_URL + '/gemini/coldEmail';
+    const apiUrl = process.env.NEXT_PUBLIC_SSE_BASE_URL + '/gemini/coldEmail';
 
     const forwardFormData = new FormData();
     forwardFormData.append('resume', resume);
-    forwardFormData.append('profile', profileString);
+    forwardFormData.append('profile', profile);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -32,8 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
