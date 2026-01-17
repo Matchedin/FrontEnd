@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <head>
         <script src="https://kit.fontawesome.com/e39a93544f.js" crossOrigin="anonymous"></script>
       </head>
