@@ -12,14 +12,6 @@ export default function InfoForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -36,7 +28,7 @@ export default function InfoForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
@@ -85,10 +77,9 @@ export default function InfoForm() {
         </label>
         <Input
           type="text"
-          name="name"
           placeholder="John Doe"
           value={formData.name}
-          onChange={handleInputChange}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: (e.target as HTMLInputElement).value }))}
           variant="outlined"
         />
       </div>
@@ -100,10 +91,9 @@ export default function InfoForm() {
         </label>
         <Input
           type="text"
-          name="school"
           placeholder="Stanford University"
           value={formData.school}
-          onChange={handleInputChange}
+          onChange={(e) => setFormData(prev => ({ ...prev, school: (e.target as HTMLInputElement).value }))}
           variant="outlined"
         />
       </div>
@@ -160,11 +150,16 @@ export default function InfoForm() {
       {/* Submit Button */}
       <Button
         variant="solid"
-        color="primary"
+        colorScheme="primary"
         size="lg"
-        onClick={handleSubmit}
-        isLoading={isLoading}
-        style={{ width: '100%', marginTop: '16px' }}
+        onClick={() => {
+          const formElement = document.querySelector('form');
+          if (formElement) {
+            formElement.dispatchEvent(new Event('submit', { bubbles: true }));
+          }
+        }}
+        loading={isLoading}
+        customStyles={{ width: '100%', marginTop: '16px' }}
       >
         {isLoading ? 'Processing...' : 'Build My Network'}
       </Button>
