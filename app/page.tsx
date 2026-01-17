@@ -1,8 +1,12 @@
+'use client';
+
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import Header from "../components/layout/Header"
-import Hero from "../components/layout/Hero"
-import About from "../components/sections/About"
-import Connect from "../components/sections/Connect"
+
+const Hero = dynamic(() => import('../components/layout/Hero'), { ssr: false });
+const About = dynamic(() => import('../components/sections/About'), { ssr: false });
+const Connect = dynamic(() => import('../components/sections/Connect'), { ssr: false });
 import Footer from "@/components/layout/Footer";
 
 export default function Home() {

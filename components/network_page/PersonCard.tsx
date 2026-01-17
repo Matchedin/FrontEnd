@@ -333,23 +333,39 @@ const mockData = {
   ]
 };
 
-export default function PersonCard() {
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(mockData.top_25_people[0]);
+interface PersonCardProps {
+  selectedPersonName: string | null;
+  onSelectPerson: (name: string) => void;
+}
+
+export default function PersonCard({ selectedPersonName, onSelectPerson }: PersonCardProps) {
 
   return (
     <div
       style={{
         width: '350px',
-        backgroundColor: 'var(--background)',
-        borderRight: '1px solid #e5e7eb',
+        background: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(10px)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.3)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: 'calc(100vh - 80px)'
+        minHeight: 'calc(100vh - 80px)',
+        boxShadow: '0 8px 32px rgba(69, 103, 204, 0.1)'
       }}
     >
-      <div style={{ padding: '16px' }}>
-        <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', margin: 0 }}>Top 25 People</h2>
+      <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(69, 103, 204, 0.1)' }}>
+        <h2 style={{ 
+          fontSize: '1.25rem', 
+          fontWeight: 'bold', 
+          margin: 0,
+          background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          Top 25 People
+        </h2>
       </div>
 
       <div
@@ -359,37 +375,60 @@ export default function PersonCard() {
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          padding: '8px'
+          padding: '12px'
         }}
       >
         {mockData.top_25_people.map((person, index) => (
           <div
             key={index}
-            onClick={() => setSelectedPerson(person)}
+            onClick={() => onSelectPerson(person.name)}
             style={{
               padding: '12px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               cursor: 'pointer',
-              backgroundColor: selectedPerson?.name === person.name ? 'var(--primary)' : 'transparent',
-              color: selectedPerson?.name === person.name ? 'white' : 'var(--foreground)',
-              transition: 'all 0.2s ease',
+              background: selectedPersonName === person.name 
+                ? 'linear-gradient(135deg, var(--primary) 0%, rgba(69, 103, 204, 0.8) 100%)'
+                : 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(10px)',
+              color: selectedPersonName === person.name ? 'white' : 'var(--foreground)',
+              border: selectedPersonName === person.name 
+                ? '1px solid rgba(255, 255, 255, 0.5)'
+                : '1px solid rgba(255, 255, 255, 0.2)',
+              transition: 'all 0.3s ease',
               overflow: 'hidden',
               whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              minHeight: '70px',
+              boxShadow: selectedPersonName === person.name
+                ? '0 8px 16px rgba(69, 103, 204, 0.2)'
+                : '0 2px 8px rgba(0, 0, 0, 0.05)'
             }}
             onMouseEnter={(e) => {
-              if (selectedPerson?.name !== person.name) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+              if (selectedPersonName !== person.name) {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.7)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(69, 103, 204, 0.1)';
               }
             }}
             onMouseLeave={(e) => {
-              if (selectedPerson?.name !== person.name) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+              if (selectedPersonName !== person.name) {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.5)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
               }
             }}
           >
             <div>
-              <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{person.name}</div>
+              <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                <span style={{ 
+                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: selectedPersonName === person.name ? 'white' : 'transparent',
+                  backgroundClip: 'text',
+                  marginRight: '6px'
+                }}>
+                  #{index+1}
+                </span>
+                {person.name}
+              </div>
               <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>{person.current_company}</div>
             </div>
           </div>
