@@ -30,6 +30,8 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
     .sort(([, a], [, b]) => b - a)
     .slice(0, 8); // Top 8 industries
 
+  const maxPercent = sortedIndustries.length > 0 ? sortedIndustries[0][1] : 100;
+
   const handleIndustryClick = async (industry: string) => {
     setSelectedIndustry(industry);
     setLoading(true);
@@ -54,7 +56,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
       boxShadow: '0 4px 16px rgba(69, 103, 204, 0.07)',
       alignItems: 'flex-start'
     }}>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         <h2 style={{
           fontSize: '1.5rem',
           fontWeight: 'bold',
@@ -110,7 +112,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   marginBottom: '8px'
-                }}>{percent}%</div>
+                }}>{((percent / maxPercent) * 100).toFixed(1)}%</div>
                 <div style={{
                   height: '4px',
                   background: 'rgba(69, 103, 204, 0.13)',
@@ -119,7 +121,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
                 }}>
                   <div style={{
                     height: '100%',
-                    width: `${percent}%`,
+                    width: `${((percent / maxPercent) * 100).toFixed(1)}%`,
                     background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
                     transition: 'width 0.5s ease-out'
                   }} />
@@ -145,7 +147,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {industryUsers.length > 0 ? (
               industryUsers.map((user: Profile) => (
                 <div key={user.profileId} style={{ marginBottom: '12px', padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.07)' }}>
