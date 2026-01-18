@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import ResumeReview from './ResumeReview';
-import ClassRecommendations from './ClassRecommendations';
 import PDFViewer from './PDFViewer';
 import ClassesPanel from './ClassesPanel';
+import { useClassRecommendations } from '@/hooks/useClassRecommendations';
 
 interface ClassRecommendation {
   className: string;
@@ -13,9 +13,11 @@ interface ClassRecommendation {
 
 export default function AcademicsContent() {
   const [activeTab, setActiveTab] = useState<'resume' | 'classes'>('resume');
-  const [classes, setClasses] = useState<ClassRecommendation[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [pdfPath, setPdfPath] = useState<string>('');
+  
+  // Use the class recommendations hook for lazy loading
+  // The hook automatically loads recommendations when resume data is available
+  const classRecommendations = useClassRecommendations();
 
   return (
     <div style={{
@@ -67,7 +69,7 @@ export default function AcademicsContent() {
               }
             }}
           >
-            📄 Resume Review
+            Resume Review
           </button>
           <button
             onClick={() => setActiveTab('classes')}
@@ -101,7 +103,7 @@ export default function AcademicsContent() {
               }
             }}
           >
-            🎓 Class Recommendations
+            Class Recommendations
           </button>
         </div>
 
@@ -111,10 +113,76 @@ export default function AcademicsContent() {
         }}>
           {activeTab === 'resume' && <ResumeReview onPdfPathChange={setPdfPath} />}
           {activeTab === 'classes' && (
-            <ClassRecommendations 
-              onClassesChange={setClasses}
-              onSearchingChange={setIsSearching}
-            />
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              padding: '48px',
+              border: '1px solid rgba(196, 65, 185, 0.3)',
+              boxShadow: '0 20px 60px rgba(196, 65, 185, 0.1)',
+              animation: 'slideUp 0.6s ease-out'
+            }}>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                marginBottom: '8px',
+                color: 'var(--foreground)',
+                background: 'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                margin: '0 0 8px 0'
+              }}>
+                Classes for Your Skills
+              </h2>
+              <p style={{
+                fontSize: '0.95rem',
+                color: 'rgba(32, 32, 32, 0.7)',
+                marginBottom: '24px',
+                lineHeight: '1.6',
+                margin: '0 0 24px 0'
+              }}>
+                Based on your resume, here are recommended classes to develop your skills.
+              </p>
+              
+              {classRecommendations.isLoading && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  color: 'rgba(32, 32, 32, 0.6)'
+                }}>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⏳</div>
+                  <p style={{ margin: 0 }}>Loading classes...</p>
+                </div>
+              )}
+              
+              {!classRecommendations.isLoading && classRecommendations.recommendations.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  background: 'rgba(255, 255, 255, 0.5)',
+                  borderRadius: '12px',
+                  border: '1px dashed rgba(196, 65, 185, 0.2)',
+                  color: 'rgba(32, 32, 32, 0.6)'
+                }}>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📚</div>
+                  <p style={{ margin: 0 }}>No classes found. Please ensure you have uploaded your resume.</p>
+                </div>
+              )}
+              
+              {!classRecommendations.isLoading && classRecommendations.error && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  color: '#dc2626',
+                  fontSize: '0.875rem'
+                }}>
+                  ⚠️ {classRecommendations.error}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -133,7 +201,7 @@ export default function AcademicsContent() {
         marginTop: '65px'
       }}>
         {activeTab === 'resume' && <PDFViewer filePath={pdfPath} />}
-        {activeTab === 'classes' && <ClassesPanel classes={classes} isLoading={isSearching} />}
+        {activeTab === 'classes' && <ClassesPanel classes={classRecommendations.recommendations} isLoading={classRecommendations.isSearching} />}
       </div>
     </div>
   );

@@ -6,10 +6,10 @@ import Link from 'next/link';
 export default function Header() {
 
   const navLinks = [
-    { href: '/network', label: 'Network' },
     { href: '/portfolio', label: 'Portfolio' },
-    { href: '/info', label: 'Info' },
+    { href: '/network', label: 'Network' },
     { href: '/academics', label: 'Academics' },
+    { href: '/info', label: 'Info' },
   ];
 
   return (
