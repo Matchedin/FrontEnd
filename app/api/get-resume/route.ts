@@ -25,7 +25,7 @@ export async function GET() {
     console.log('Extracted resume text from:', docxFile);
     console.log('Resume text:\n', text);
 
-    return Response.json({ text });
+    return Response.json({ text, filename: docxFile });
   } catch (error) {
     console.error('Error reading resume:', error);
     return Response.json(

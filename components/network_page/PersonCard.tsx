@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { mockPersonsData } from '../../data/connectionsData';
 
 interface PersonData {
@@ -11,11 +11,11 @@ interface PersonData {
   about: string;
   current_role: string;
   current_company: string;
-  can_offer: string[];
+  can_offer: string | string[];
   industry: string;
-  skills: string[];
-  needs: string[];
-  rank?: number;
+  skills: string | string[];
+  needs: string | string[];
+  rank: number;
 }
 
 interface PersonCardProps {
@@ -25,16 +25,58 @@ interface PersonCardProps {
 }
 
 export default function PersonCard({ selectedPersonName, onSelectPerson, connectionsData }: PersonCardProps) {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsHydrated(true);
+  }, []);
+
   const people = useMemo(() => {
+    // On server render, always use mock data to ensure hydration match
+    if (!isHydrated) {
+      return mockPersonsData.slice(0, 50);
+    }
+
     if (connectionsData) {
       try {
         // Parse the JSON string from the API response
-        const parsedData = JSON.parse(connectionsData) as PersonData[];
+        const parsedData = JSON.parse(connectionsData) as Array<{
+          rank?: number;
+          skills?: string | string[];
+          can_offer?: string | string[];
+          needs?: string | string[];
+          [key: string]: unknown;
+        }>;
         // Ensure rank is always set (use index + 1 as fallback)
-        return parsedData.slice(0, 50).map((person, index) => ({
-          ...person,
-          rank: person.rank ?? index + 1
-        }));
+        // Also parse string arrays and ensure data types are correct
+        return parsedData.slice(0, 50).map((person, index): PersonData => {
+          const parseArray = (value: string | string[] | undefined): string[] => {
+            if (typeof value === 'string') {
+              try {
+                return JSON.parse(value.replace(/'/g, '"'));
+              } catch {
+                return [value];
+              }
+            }
+            return Array.isArray(value) ? value : [];
+          };
+
+          return {
+            name: String(person.name || ''),
+            email: String(person.email || ''),
+            location: String(person.location || ''),
+            headline: String(person.headline || ''),
+            about: String(person.about || ''),
+            current_role: String(person.current_role || ''),
+            current_company: String(person.current_company || ''),
+            industry: String(person.industry || ''),
+            rank: (person.rank as number) ?? index + 1,
+            skills: parseArray(person.skills),
+            can_offer: parseArray(person.can_offer),
+            needs: parseArray(person.needs)
+          };
+        });
       } catch (error) {
         console.error('Failed to parse connections data:', error);
         return mockPersonsData.slice(0, 50);
@@ -42,7 +84,7 @@ export default function PersonCard({ selectedPersonName, onSelectPerson, connect
     }
     // Fallback to mock data if no connectionsData provided
     return mockPersonsData.slice(0, 50);
-  }, [connectionsData]);
+  }, [connectionsData, isHydrated]);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedCardRef = useRef<HTMLDivElement>(null);
   

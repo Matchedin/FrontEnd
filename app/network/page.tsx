@@ -50,8 +50,47 @@ export default function NetworkPage() {
     console.log('connectionsData available:', !!connectionsData);
     if (connectionsData) {
       try {
-        const parsedData = JSON.parse(connectionsData) as PersonData[];
-        const person = parsedData.find(p => p.name === personName);
+        const rawData = JSON.parse(connectionsData);
+        
+        // Parse array helper - same as in Connections component
+        const parseArray = (value: unknown): string[] => {
+          if (typeof value === 'string') {
+            try {
+              return JSON.parse(value.replace(/'/g, '"'));
+            } catch {
+              return [value];
+            }
+          }
+          return Array.isArray(value) ? value : [];
+        };
+        
+        // Flatten nested structure if needed
+        let flatData: Array<Record<string, unknown>> = [];
+        if (rawData.top_25_people && rawData.last_50_people) {
+          flatData = [...(rawData.top_25_people as Array<Record<string, unknown>>), ...(rawData.last_50_people as Array<Record<string, unknown>>)];
+        } else if (Array.isArray(rawData)) {
+          flatData = rawData as Array<Record<string, unknown>>;
+        } else {
+          flatData = Object.values(rawData).flat() as Array<Record<string, unknown>>;
+        }
+        
+        // Transform the data to ensure arrays are properly parsed
+        const transformedData: PersonData[] = flatData.map((person: Record<string, unknown>, index: number) => ({
+          name: String(person.name || ''),
+          email: String(person.email || ''),
+          location: String(person.location || ''),
+          headline: String(person.headline || ''),
+          about: String(person.about || ''),
+          current_role: String(person.current_role || ''),
+          current_company: String(person.current_company || ''),
+          industry: String(person.industry || ''),
+          rank: (person.rank as number) ?? index + 1,
+          skills: parseArray(person.skills),
+          can_offer: parseArray(person.can_offer),
+          needs: parseArray(person.needs)
+        }));
+        
+        const person = transformedData.find(p => p.name === personName);
         console.log('Found person:', person);
         if (person) {
           setSelectedPersonForConnect(person);

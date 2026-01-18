@@ -7,7 +7,9 @@ export default function Header() {
 
   const navLinks = [
     { href: '/network', label: 'Network' },
+    { href: '/portfolio', label: 'Portfolio' },
     { href: '/info', label: 'Info' },
+    { href: '/academics', label: 'Academics' },
   ];
 
   return (

@@ -56,10 +56,16 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
     setIsLoading(true);
     
     try {
+      // Step 1: Clear temp folder
+      console.log('Clearing temp folder...');
+      await fetch('/api/temp-management?action=clear', {
+        method: 'POST',
+      });
+
+      // Step 2: Upload resume and get matches
+      console.log('Uploading resume and fetching matches...');
       const uploadFormData = new FormData();
-      uploadFormData.append('name', formData.name);
-      uploadFormData.append('school', formData.school);
-      uploadFormData.append('resume', formData.resume);
+      uploadFormData.append('file', formData.resume);
 
       const response = await fetch('/api/connection_fetching', {
         method: 'POST',
@@ -73,13 +79,59 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
 
       const result = await response.json();
       
-      // Call callback with the connections data and resume file if provided
-      if (onConnectionsDataReady && result.data) {
-        onConnectionsDataReady(result.data, formData.resume || undefined);
+      // Step 3: Save uploaded resume file to temp
+      console.log('Saving resume file to temp...');
+      const resumeFormData = new FormData();
+      resumeFormData.append('file', formData.resume);
+      resumeFormData.append('filename', formData.resume.name);
+      
+      await fetch('/api/temp-management?action=save-file', {
+        method: 'POST',
+        body: resumeFormData,
+      });
+
+      // Step 4: Save matches JSON to temp
+      console.log('Saving matches to temp...');
+      await fetch('/api/temp-management?action=save-json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: result,
+          filename: 'matches.json'
+        }),
+      });
+
+      // Step 5: Flatten the API response if it has nested structure
+      let flattenedData: Array<Record<string, unknown>> = [];
+      if (result.top_25_people && result.last_50_people) {
+        // API returned nested structure - flatten it
+        flattenedData = [...(result.top_25_people as Array<Record<string, unknown>>), ...(result.last_50_people as Array<Record<string, unknown>>)];
+      } else if (Array.isArray(result)) {
+        // API returned flat array
+        flattenedData = result as Array<Record<string, unknown>>;
+      } else {
+        // Fallback - try to extract as array
+        flattenedData = Object.values(result).flat() as Array<Record<string, unknown>>;
       }
+
+      // Step 6: Store in sessionStorage and redirect
+      console.log('Storing connections data and redirecting...');
+      sessionStorage.setItem('connectionsData', JSON.stringify(flattenedData));
+      sessionStorage.setItem('userInfo', JSON.stringify({
+        name: formData.name,
+        school: formData.school
+      }));
 
       setError('');
       alert('Resume uploaded successfully!');
+      
+      // Redirect to network page
+      if (onConnectionsDataReady) {
+        onConnectionsDataReady(JSON.stringify(flattenedData), formData.resume || undefined);
+      }
+      
       setFormData({ name: '', school: '', resume: null });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload';

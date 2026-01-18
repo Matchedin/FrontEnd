@@ -22,8 +22,8 @@ export default function Information() {
       };
       reader.readAsArrayBuffer(resumeFile);
     }
-    // Redirect to network page
-    router.push('/network');
+    // Redirect to portfolio page
+    router.push('/portfolio');
   };
 
   return (

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiUrl = process.env.SSE_BASE_URL + '/classes/lookupSkillClasses';
+    const apiUrl = process.env.SSE_BASE_URL + '/Gemini/lookupSkillClasses';
     console.log('Calling API:', apiUrl);
     console.log('University:', university);
     console.log('Skills:', skills);
@@ -44,7 +44,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const classesJson = await response.text();
+    let classesJson = await response.text();
+    
+    // Strip markdown formatting if present (```json ... ```)
+    if (classesJson.startsWith('```json')) {
+      classesJson = classesJson.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    }
+    
     return new NextResponse(classesJson, {
       headers: {
         'Content-Type': 'application/json',

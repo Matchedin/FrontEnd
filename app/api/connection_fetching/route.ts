@@ -3,39 +3,57 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    
-    const apiUrl = process.env.SSE_BASE_URL+'/connection/fetchConnections';
+    const file = formData.get('file') as File | null;
+
+    // Validate file exists
+    if (!file || file.size === 0) {
+      return NextResponse.json(
+        { error: 'No file uploaded.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate file type
+    if (!file.name.endsWith('.docx')) {
+      return NextResponse.json(
+        { error: 'Only .docx files are supported.' },
+        { status: 400 }
+      );
+    }
+
+    // Create FormData to send to backend
+    const backendFormData = new FormData();
+    backendFormData.append('file', file, file.name);
+
+    const apiUrl = process.env.SSE_BASE_URL + '/Match/resume';
     
     const response = await fetch(apiUrl, {
       method: 'POST',
-      body: formData,
+      body: backendFormData,
+      headers: {
+        // Don't set Content-Type manually - fetch will set it with boundary
+      },
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
       return NextResponse.json(
-        { error: 'Failed to upload file' },
+        { error: errorText || 'Failed to process resume' },
         { status: response.status }
       );
     }
 
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-    let result = '';
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        result += decoder.decode(value, { stream: true });
-      }
-    }
-
-    return NextResponse.json({ success: true, data: result });
+    const body = await response.text();
+    
+    // Parse the JSON string from backend and return as JSON
+    const jsonData = JSON.parse(body);
+    return NextResponse.json(jsonData, { status: 200 });
   } catch (error) {
-    console.error('Upload error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    console.error('Resume upload error:', errorMessage);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: `Error calling matching service: ${errorMessage}` },
+      { status: 502 }
     );
   }
 }

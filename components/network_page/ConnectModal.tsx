@@ -59,7 +59,7 @@ export default function ConnectModal({ person, isOpen, onClose, resumeFile }: Co
         textToUse = data.text;
         setResumeText(textToUse); // Cache it for next time
       } catch (err) {
-        setError('Could not find resume file. Please ensure a .docx file exists in the temp folder.');
+        setError(`Could not find resume file. Please ensure a .docx file exists in the temp folder: ${err}`);
         return;
       }
     }
