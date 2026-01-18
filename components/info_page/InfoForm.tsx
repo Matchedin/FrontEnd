@@ -16,6 +16,7 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingStep, setLoadingStep] = useState<'processing' | 'analyzing' | 'finalizing' | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,6 +55,7 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
     }
 
     setIsLoading(true);
+    setLoadingStep('processing');
     
     try {
       // Step 1: Clear temp folder
@@ -126,18 +128,25 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
         flattenedData = Object.values(result).flat() as Array<Record<string, unknown>>;
       }
 
-      // Step 6: Store in sessionStorage and redirect
-      console.log('Storing connections data and redirecting...');
+      // Step 6: Store in sessionStorage
+      console.log('Storing connections data...');
       sessionStorage.setItem('connectionsData', JSON.stringify(flattenedData));
       sessionStorage.setItem('userInfo', JSON.stringify({
         name: formData.name,
         school: formData.school
       }));
 
+      // Change loading step to analyzing
+      setLoadingStep('analyzing');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Change loading step to finalizing
+      setLoadingStep('finalizing');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       setError('');
-      alert('Resume uploaded successfully!');
       
-      // Redirect to network page
+      // Redirect to portfolio page with a small delay to let other components initialize
       if (onConnectionsDataReady) {
         onConnectionsDataReady(JSON.stringify(flattenedData), formData.resume || undefined);
       }
@@ -149,6 +158,7 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
       console.error('Upload error:', err);
     } finally {
       setIsLoading(false);
+      setLoadingStep(null);
     }
   };
 
@@ -274,7 +284,10 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
         loading={isLoading}
         customStyles={{ width: '100%', marginTop: '16px' }}
       >
-        {isLoading ? 'Processing...' : 'Build My Network'}
+        {!isLoading && 'Build My Network'}
+        {isLoading && loadingStep === 'processing' && 'Processing Your Resume...'}
+        {isLoading && loadingStep === 'analyzing' && 'Analyzing Your Skills...'}
+        {isLoading && loadingStep === 'finalizing' && 'Preparing Your Profile...'}
       </Button>
 
       <p style={{ fontSize: '0.875rem', color: '#9ca3af', textAlign: 'center' }}>

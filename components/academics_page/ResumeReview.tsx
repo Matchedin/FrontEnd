@@ -35,7 +35,7 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
         setResumeFile(new File([data.text], filename, { type: 'text/plain' }));
       } catch (err) {
         setError('Could not find resume file in temp folder');
-        console.error(err);
+        // Silently fail - this is expected when no data has been uploaded
       } finally {
         setIsLoading(false);
       }
@@ -270,7 +270,7 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
               animation: 'fadeInUp 0.6s ease-out 0.2s backwards'
             }}>
               <p style={{ fontSize: '0.9rem', color: 'rgba(32, 32, 32, 0.6)', margin: '0 0 12px 0', fontWeight: '500' }}>
-                📄 File Analyzed
+                File Analyzed
               </p>
               <p style={{ fontSize: '1.1rem', color: 'var(--foreground)', margin: 0, fontWeight: '600' }}>
                 {resumeFile?.name}

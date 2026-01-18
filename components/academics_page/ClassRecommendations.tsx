@@ -233,7 +233,7 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
                 marginBottom: '12px',
                 color: 'var(--accent)'
               }}>
-                🎓 University / School
+                University / School
               </label>
               <input
                 type="text"

@@ -7,6 +7,7 @@ import PortfolioHeader from '../../components/portfolio_page/PortfolioHeader';
 import ConnectionTypes from '../../components/portfolio_page/ConnectionTypes';
 import ResumeInsights from '../../components/portfolio_page/ResumeInsights';
 import Footer from '../../components/layout/Footer';
+import NoDataModal from '../../components/common/NoDataModal';
 import { ConnectionData } from '@/data/connectionData';
 
 export default function PortfolioPage() {
@@ -39,9 +40,14 @@ export default function PortfolioPage() {
       }
     }
 
+    // Check if there's meaningful data
+    const hasUserInfo = !!info;
+    const hasConnections = connections.length > 0;
+    
     setUserInfo(info);
     setConnectionData(connections);
     setConnectionTypes(typeCounts);
+    setHasData(hasUserInfo && hasConnections);
   }, []);
 
   // Load resume text
@@ -73,7 +79,10 @@ export default function PortfolioPage() {
         minHeight: 'calc(100vh - 80px)',
         position: 'relative',
         paddingTop: '60px',
-        paddingBottom: '100px'
+        paddingBottom: '100px',
+        filter: !hasData ? 'blur(4px)' : 'none',
+        pointerEvents: !hasData ? 'none' : 'auto',
+        transition: 'filter 0.3s ease'
       }}>
         <PortfolioBackground />
 
@@ -177,6 +186,8 @@ export default function PortfolioPage() {
           }
         }
       `}</style>
+
+      <NoDataModal isOpen={!hasData} />
 
       <Footer />
     </div>

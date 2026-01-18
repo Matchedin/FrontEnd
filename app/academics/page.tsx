@@ -1,12 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import StaticHeader from '../../components/layout/StaticHeader';
 import AcademicsBackground from '../../components/academics_page/AcademicsBackground';
 import AcademicsContent from '../../components/academics_page/AcademicsContent';
 import Footer from '../../components/layout/Footer'
+import NoDataModal from '../../components/common/NoDataModal';
 
 export default function AcademicsPage() {
+  const [hasData, setHasData] = useState(true);
+
+  useEffect(() => {
+    const userInfoStr = sessionStorage.getItem('userInfo');
+    const hasUserInfo = !!userInfoStr;
+    setHasData(hasUserInfo);
+  }, []);
+
   return (
     <div className="w-full min-h-screen" style={{ 
       backgroundColor: 'var(--background)',
@@ -19,7 +28,10 @@ export default function AcademicsPage() {
         minHeight: 'calc(100vh - 80px)',
         position: 'relative',
         paddingTop: '200px',
-        paddingBottom: '30px'
+        paddingBottom: '30px',
+        filter: !hasData ? 'blur(4px)' : 'none',
+        pointerEvents: !hasData ? 'none' : 'auto',
+        transition: 'filter 0.3s ease'
       }}>
         <AcademicsBackground />
 
@@ -61,6 +73,9 @@ export default function AcademicsPage() {
           50% { opacity: 0.8; }
         }
       `}</style>
+      
+      <NoDataModal isOpen={!hasData} />
+      
       <Footer></Footer>
     </div>
   );
