@@ -1,26 +1,20 @@
 'use client';
 
-interface ConnectionItem {
-  name?: string;
-  industry?: string;
-  current_role?: string;
-  current_company?: string;
-  [key: string]: string | string[] | undefined;
-}
+import { ConnectionData } from "@/data/connectionData";
 
 interface StrengthsAndImprovementsProps {
-  connectionData?: ConnectionItem[];
+  connectionData?: ConnectionData[];
 }
 
 export default function StrengthsAndImprovements({ connectionData }: StrengthsAndImprovementsProps) {
   // Aggregate strengths and improvements from connection data
-  const aggregateInsights = (data?: ConnectionItem[]) => {
+  const aggregateInsights = (data?: ConnectionData[]) => {
     const strengths: string[] = [];
     const improvements: string[] = [];
 
     if (data && data.length > 0) {
       // Aggregate based on connection patterns
-      const roles = data.map((d) => d.role).filter(Boolean);
+      const roles = data.map((d) => d.current_role).filter(Boolean);
       const industries = data.map((d) => d.industry).filter(Boolean);
 
       if (industries.length > 0) {

@@ -1,117 +1,167 @@
 'use client';
 
+
+import React, { useState } from 'react';
+
 interface ConnectionTypesProps {
-  connectionTypes: Record<string, number>;
+  industryMatches: Record<string, number>; // percent match per industry
 }
 
-export default function ConnectionTypes({ connectionTypes }: ConnectionTypesProps) {
-  const sortedTypes = Object.entries(connectionTypes)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 8); // Top 8 connection types
+export default function ConnectionTypes({ industryMatches }: ConnectionTypesProps) {
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
+  const [industryUsers, setIndustryUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const maxCount = Math.max(...Object.values(connectionTypes), 1);
+  if (!industryMatches || Object.keys(industryMatches).length === 0) {
+    return (
+      <div style={{
+        padding: '24px',
+        textAlign: 'center',
+        color: 'rgba(32, 32, 32, 0.6)',
+        fontSize: '1rem',
+        background: 'rgba(255,255,255,0.7)',
+        borderRadius: '12px',
+        border: '1px solid rgba(69, 103, 204, 0.10)',
+        boxShadow: '0 2px 8px rgba(69, 103, 204, 0.07)'
+      }}>
+        No industry match data available.
+      </div>
+    );
+  }
+
+  const sortedIndustries = Object.entries(industryMatches)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8); // Top 8 industries
+
+  const handleIndustryClick = async (industry: string) => {
+    setSelectedIndustry(industry);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/searchByIndustry?q=${encodeURIComponent(industry)}`);
+      const data = await res.json();
+      setIndustryUsers(data);
+    } catch (err) {
+      setIndustryUsers([]);
+    }
+    setLoading(false);
+  };
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-      backdropFilter: 'blur(20px)',
-      borderRadius: '20px',
-      padding: '48px',
-      border: '1px solid rgba(69, 103, 204, 0.2)',
-      boxShadow: '0 8px 32px rgba(69, 103, 204, 0.1)',
-      animation: 'slideUp 0.6s ease-out'
+      display: 'flex',
+      gap: '32px',
+      background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.07) 0%, rgba(139, 92, 246, 0.07) 100%)',
+      borderRadius: '16px',
+      padding: '32px',
+      border: '1px solid rgba(69, 103, 204, 0.15)',
+      boxShadow: '0 4px 16px rgba(69, 103, 204, 0.07)',
+      alignItems: 'flex-start'
     }}>
-      <h2 style={{
-        fontSize: '2rem',
-        fontWeight: 'bold',
-        marginBottom: '12px',
-        color: 'var(--foreground)',
-        background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text'
-      }}>
-        🌐 Your Network by Type
-      </h2>
-      <p style={{
-        fontSize: '1.05rem',
-        color: 'rgba(32, 32, 32, 0.7)',
-        marginBottom: '32px',
-        lineHeight: '1.6'
-      }}>
-        Distribution of your connections across different industries and roles
-      </p>
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '24px'
-      }}>
-        {sortedTypes.length > 0 ? (
-          sortedTypes.map(([type, count], i) => (
-            <div
-              key={type}
-              style={{
-                background: 'rgba(255, 255, 255, 0.5)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(69, 103, 204, 0.2)',
-                transition: 'all 0.3s ease',
-                animation: `slideUp 0.6s ease-out ${i * 0.1}s backwards`,
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 24px rgba(69, 103, 204, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-              }}
-            >
-              <div style={{
-                fontSize: '0.9rem',
-                color: 'rgba(32, 32, 32, 0.7)',
-                marginBottom: '12px',
-                fontWeight: '500'
-              }}>
-                {type}
-              </div>
-              <div style={{
-                fontSize: '2.5rem',
-                fontWeight: 'bold',
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '12px'
-              }}>
-                {count}
-              </div>
-              <div style={{
-                height: '4px',
-                background: 'rgba(69, 103, 204, 0.2)',
-                borderRadius: '2px',
-                overflow: 'hidden'
-              }}>
+      <div style={{ flex: 1 }}>
+        <h2 style={{
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          marginBottom: '8px',
+          color: 'var(--foreground)',
+          background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          🏭 Percent Match by Industry
+        </h2>
+        <p style={{
+          fontSize: '1rem',
+          color: 'rgba(32, 32, 32, 0.7)',
+          marginBottom: '18px',
+          lineHeight: '1.5'
+        }}>
+          See how closely your profile matches top industries. Click an industry to view users in that field.
+        </p>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: '16px'
+        }}>
+          {sortedIndustries.length > 0 ? (
+            sortedIndustries.map(([industry, percent], i) => (
+              <div
+                key={industry}
+                style={{
+                  background: selectedIndustry === industry ? 'rgba(139, 92, 246, 0.12)' : 'rgba(255,255,255,0.7)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  border: selectedIndustry === industry ? '2px solid var(--accent)' : '1px solid rgba(69, 103, 204, 0.13)',
+                  cursor: 'pointer',
+                  boxShadow: selectedIndustry === industry ? '0 4px 12px rgba(139, 92, 246, 0.13)' : 'none',
+                  transition: 'all 0.2s',
+                  animation: `slideUp 0.5s ease-out ${i * 0.08}s backwards`,
+                }}
+                onClick={() => handleIndustryClick(industry)}
+              >
                 <div style={{
-                  height: '100%',
-                  width: `${(count / maxCount) * 100}%`,
+                  fontSize: '1rem',
+                  color: 'rgba(32, 32, 32, 0.8)',
+                  marginBottom: '8px',
+                  fontWeight: '500'
+                }}>{industry}</div>
+                <div style={{
+                  fontSize: '2rem',
+                  fontWeight: 'bold',
                   background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-                  transition: 'width 0.6s ease-out'
-                }} />
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  marginBottom: '8px'
+                }}>{percent}%</div>
+                <div style={{
+                  height: '4px',
+                  background: 'rgba(69, 103, 204, 0.13)',
+                  borderRadius: '2px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${percent}%`,
+                    background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                    transition: 'width 0.5s ease-out'
+                  }} />
+                </div>
               </div>
+            ))
+          ) : (
+            <div style={{
+              gridColumn: '1 / -1',
+              textAlign: 'center',
+              padding: '24px',
+              color: 'rgba(32, 32, 32, 0.6)'
+            }}>
+              No industry matches found.
             </div>
-          ))
+          )}
+        </div>
+      </div>
+      <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(69, 103, 204, 0.10)', boxShadow: '0 2px 8px rgba(69, 103, 204, 0.07)' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '10px', color: 'var(--accent)' }}>
+          {selectedIndustry ? `Users in ${selectedIndustry}` : 'Select an industry'}
+        </h3>
+        {loading ? (
+          <div>Loading...</div>
         ) : (
-          <div style={{
-            gridColumn: '1 / -1',
-            textAlign: 'center',
-            padding: '40px',
-            color: 'rgba(32, 32, 32, 0.6)'
-          }}>
-            No connections found. Build your network first!
+          <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+            {industryUsers.length > 0 ? (
+              industryUsers.map((user: any) => (
+                <div key={user.ProfileId} style={{ marginBottom: '12px', padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.07)' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--foreground)' }}>{user.Name || 'Unnamed'}</div>
+                  <div style={{ fontSize: '0.95rem', color: 'rgba(32,32,32,0.7)' }}>{user.Headline || user.RoleCurrent || ''}</div>
+                  <div style={{ fontSize: '0.9rem', color: 'rgba(32,32,32,0.6)' }}>{user.CurrentCompany || ''}</div>
+                </div>
+              ))
+            ) : (
+              <div style={{ color: 'rgba(32,32,32,0.6)' }}>
+                {selectedIndustry ? 'No users found in this industry.' : 'No industry selected.'}
+              </div>
+            )}
           </div>
         )}
       </div>

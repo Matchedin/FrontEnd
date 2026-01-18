@@ -8,14 +8,7 @@ import ConnectionTypes from '../../components/portfolio_page/ConnectionTypes';
 import ResumeCharacteristics from '../../components/portfolio_page/ResumeCharacteristics';
 import StrengthsAndImprovements from '../../components/portfolio_page/StrengthsAndImprovements';
 import Footer from '../../components/layout/Footer';
-
-interface ConnectionData {
-  name: string;
-  industry: string;
-  current_role: string;
-  current_company: string;
-  skills: string[];
-}
+import { ConnectionData } from '@/data/connectionData';
 
 export default function PortfolioPage() {
   const [connectionTypes, setConnectionTypes] = useState<Record<string, number>>({});
