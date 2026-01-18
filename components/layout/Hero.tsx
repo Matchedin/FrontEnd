@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 export default function Hero() {
   return (
     <section className="relative w-full h-screen overflow-hidden">

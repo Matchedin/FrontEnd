@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(profile: string, resume: File) {
   try {
     const body = await request.json();
     const profileJson = body.profileJson as string | null;
