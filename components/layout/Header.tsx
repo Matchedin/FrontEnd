@@ -58,14 +58,14 @@ export default function Header() {
         `}
       >
         {/* Left Side - Navigation */}
-        <nav className="flex gap-6 ml-8 text-lg">
+        <nav className="flex gap-3 ml-8 text-lg">
           {navLinks.map((link) => (
             link.href.startsWith('#') ? (
               <a
                 key={link.href}
                 href={link.href}
                 className={`
-                  relative text-white font-semibold py-2.5 px-6 rounded-xl
+                  relative text-white font-semibold py-2 px-4 rounded-xl
                   transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]
                   overflow-hidden tracking-wide
                   hover:-translate-y-0.5 hover:bg-white/20 hover:border-white/30 hover:shadow-lg
@@ -78,7 +78,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className={`
-                  relative text-white font-semibold py-2.5 px-6 rounded-xl
+                  relative text-white font-semibold py-2 px-4 rounded-xl
                   transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]
                   overflow-hidden tracking-wide
                   hover:-translate-y-0.5 hover:bg-white/20 hover:border-white/30 hover:shadow-lg
