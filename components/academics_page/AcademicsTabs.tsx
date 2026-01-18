@@ -51,7 +51,7 @@ export default function AcademicsTabs({ activeTab, onTabChange }: AcademicsTabsP
           }
         }}
       >
-        📄 Resume Review
+        Resume Review
       </button>
       <button
         onClick={() => onTabChange('classes')}
@@ -90,7 +90,7 @@ export default function AcademicsTabs({ activeTab, onTabChange }: AcademicsTabsP
           }
         }}
       >
-        🎓 Class Recommendations
+        Class Recommendations
       </button>
     </div>
   );

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import StaticHeader from "../../components/layout/StaticHeader"
 import PersonCard from "../../components/network_page/PersonCard";
 import Connections from "../../components/network_page/Connections";
 import ConnectModal from "../../components/network_page/ConnectModal";
+import NoDataModal from "../../components/common/NoDataModal";
 import { mockPersonsData } from "../../data/connectionsData";
 
 interface PersonData {
@@ -24,6 +25,7 @@ interface PersonData {
 
 export default function NetworkPage() {
   const [selectedPersonName, setSelectedPersonName] = useState<string | null>(null);
+  const [hasData, setHasData] = useState(true);
   const [connectionsData] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const storedData = sessionStorage.getItem('connectionsData');
@@ -44,6 +46,13 @@ export default function NetworkPage() {
 
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedPersonForConnect, setSelectedPersonForConnect] = useState<PersonData | null>(null);
+
+  // Check if user has data
+  useEffect(() => {
+    const userInfoStr = sessionStorage.getItem('userInfo');
+    const hasUserInfo = !!userInfoStr;
+    setHasData(hasUserInfo);
+  }, []);
 
   const handleConnectClick = (personName: string) => {
     console.log('handleConnectClick called with:', personName);
@@ -114,7 +123,10 @@ export default function NetworkPage() {
         className="flex flex-1 overflow-hidden" 
         style={{
           background: 'linear-gradient(135deg, #F5F5F5 0%, #E8E8F0 100%)',
-          position: 'relative'
+          position: 'relative',
+          filter: !hasData ? 'blur(4px)' : 'none',
+          pointerEvents: !hasData ? 'none' : 'auto',
+          transition: 'filter 0.3s ease'
         }}
       >
         {/* Animated gradient background elements */}
@@ -161,6 +173,8 @@ export default function NetworkPage() {
         }}
         resumeFile={resumeFile}
       />
+
+      <NoDataModal isOpen={!hasData} />
     </div>
   );
 }

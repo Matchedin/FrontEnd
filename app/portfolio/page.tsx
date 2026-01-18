@@ -8,6 +8,7 @@ import ConnectionTypes from '../../components/portfolio_page/ConnectionTypes';
 import ResumeCharacteristics from '../../components/portfolio_page/ResumeCharacteristics';
 import StrengthsAndImprovements from '../../components/portfolio_page/StrengthsAndImprovements';
 import Footer from '../../components/layout/Footer';
+import NoDataModal from '../../components/common/NoDataModal';
 import { ConnectionData } from '@/data/connectionData';
 
 export default function PortfolioPage() {
@@ -15,6 +16,7 @@ export default function PortfolioPage() {
   const [connectionData, setConnectionData] = useState<ConnectionData[]>([]);
   const [resumeText, setResumeText] = useState('');
   const [userInfo, setUserInfo] = useState<{ name: string; school: string } | null>(null);
+  const [hasData, setHasData] = useState(true);
 
   // Load session storage data
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -39,9 +41,14 @@ export default function PortfolioPage() {
       }
     }
 
+    // Check if there's meaningful data
+    const hasUserInfo = !!info;
+    const hasConnections = connections.length > 0;
+    
     setUserInfo(info);
     setConnectionData(connections);
     setConnectionTypes(typeCounts);
+    setHasData(hasUserInfo && hasConnections);
   }, []);
 
   // Load resume text
@@ -73,7 +80,10 @@ export default function PortfolioPage() {
         minHeight: 'calc(100vh - 80px)',
         position: 'relative',
         paddingTop: '60px',
-        paddingBottom: '100px'
+        paddingBottom: '100px',
+        filter: !hasData ? 'blur(4px)' : 'none',
+        pointerEvents: !hasData ? 'none' : 'auto',
+        transition: 'filter 0.3s ease'
       }}>
         <PortfolioBackground />
 
@@ -116,6 +126,8 @@ export default function PortfolioPage() {
           }
         }
       `}</style>
+
+      <NoDataModal isOpen={!hasData} />
 
       <Footer />
     </div>

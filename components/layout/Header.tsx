@@ -20,8 +20,8 @@ export default function Header() {
     { href: '#about', label: 'About' },
     { href: '#connect', label: 'Connect' },
     { href: '/network', label: 'Network' },
-    { href: '/info', label: 'Info' },
     { href: '/academics', label: 'Academics' },
+    { href: '/info', label: 'Info' },
   ];
 
   return (

@@ -20,7 +20,7 @@ export default function PDFViewer({ filePath }: PDFViewerProps) {
         alignItems: 'center',
         gap: '8px'
       }}>
-        📄 Resume Preview
+        Resume Preview
       </div>
 
       {filePath ? (
