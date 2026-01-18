@@ -161,7 +161,10 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
   React.useEffect(() => {
     setPanelVisible(!!selectedNode);
   }, [selectedNode]);
-  const panelWidth = 320; // keep in sync with panel width
+  const panelWidth = 420; // keep in sync with panel width (in px)
+  // increased panel width for wider detail view
+  // adjust this value if you want a different width
+  
 
   // Extra animation for ranks 26-50 (entering / exiting)
   React.useEffect(() => {
@@ -392,6 +395,11 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
     return () => clearTimeout(t);
   }, [fitToRanks]);
 
+  const capitalizeWords = (str: string) => {
+    if (!str) return '';
+    return String(str).toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   return (
     <div style={{ display: 'flex', flex: 1, position: 'relative', overflow: 'hidden' }}>
       {/* Network Visualization */}
@@ -405,7 +413,7 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
           position: 'relative',
           cursor: isDragging ? 'grabbing' : 'grab',
           overflow: 'hidden',
-          backdropFilter: 'blur(5px)'
+          backdropFilter: 'blur(5px)',
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -519,7 +527,6 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
           }}
         >
           <div>
-            <div style={{ fontSize: '14px', marginBottom: '4px' }}>👤</div>
             {mockCurrentUser.name}
           </div>
         </div>
@@ -603,7 +610,7 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
               boxShadow: `0 8px 24px rgba(69, 103, 204, ${0.15 * opacity})`,
               border: `2px solid ${selectedNode?.name === pos.name ? 'rgba(255, 255, 255, 0.5)' : 'rgba(69, 103, 204, 0.3)'}`,
               transition: isDragging ? 'none' : 'all 0.3s ease',
-              overflow: 'hidden',
+              overflow: 'visible',
               lineHeight: '1.1',
               opacity: isVisible ? opacity : 0,
               transform: `scale(${scale})`,
@@ -619,6 +626,8 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                 element.style.transform = `scale(${scale * 1.15})`;
                 element.style.boxShadow = `0 12px 32px rgba(69, 103, 204, ${0.25 * opacity})`;
                 element.style.zIndex = '5';
+                // turn pink on hover
+                element.style.background = 'linear-gradient(135deg, var(--accent) 0%, rgba(196, 65, 185, 0.9) 100%)';
               }
             }}
             onMouseLeave={(e) => {
@@ -627,14 +636,23 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                 element.style.transform = `scale(${scale})`;
                 element.style.boxShadow = `0 8px 24px rgba(69, 103, 204, ${0.15 * opacity})`;
                 element.style.zIndex = '1';
+                // restore selected or default background
+                element.style.background = selectedNode?.name === pos.name
+                  ? 'linear-gradient(135deg, var(--accent) 0%, rgba(196, 65, 185, 0.8) 100%)'
+                  : 'rgba(255, 255, 255, 0.85)';
               }
             }}
           >
-            <div>
-              <div style={{ fontSize: pos.rank === 1 ? '24px' : '20px', marginBottom: '2px' }}>
-                {pos.name === selectedNode?.name ? '✓' : '●'}
-              </div>
-              <div style={{ fontSize: '9px' }}>Rank #{pos.rank}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4px 6px', overflow: 'visible' }}>
+              <div style={{
+                fontSize: pos.rank === 1 ? '13px' : '11px',
+                fontWeight: 700,
+                color: selectedNode?.name === pos.name ? 'white' : 'var(--foreground)',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'visible'
+              }}>{(pos.name || '').trim().split(/\s+/).slice(-1)[0]}</div>
+              <div style={{ fontSize: '9px', marginTop: '4px', color: selectedNode?.name === pos.name ? 'rgba(255,255,255,0.9)' : '#6b7280' }}>Rank #{pos.rank}</div>
             </div>
           </div>
         );
@@ -717,13 +735,13 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
       </div>
 
       {/* Right Detail Panel (always rendered; slides on/off) */}
-      <div
+          <div
         style={{
           position: 'absolute',
           top: 0,
           right: 0,
           height: '100%',
-          width: '320px',
+          width: `${panelWidth}px`,
           transform: panelVisible ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 300ms cubic-bezier(0.2,0.8,0.2,1)',
           background: 'rgba(255, 255, 255, 0.95)',
@@ -765,7 +783,8 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                     background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
+                    backgroundClip: 'text',
+                    marginTop: '60px'
                   }}>
                     {person.name}
                   </h2>
@@ -795,24 +814,19 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                       Can Offer
                     </h3>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      {Array.isArray(person.can_offer) && person.can_offer.map((skill: string, i: number) => {
-                        const capitalizeWords = (str: string) => {
-                          return str.replace(/\b\w/g, (char) => char.toUpperCase());
-                        };
-                        return (
-                          <span key={i} style={{
-                            fontSize: '0.75rem',
-                            background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(69, 103, 204, 0.05) 100%)',
-                            border: '1px solid rgba(69, 103, 204, 0.3)',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            color: 'var(--primary)',
-                            fontWeight: '500'
-                          }}>
-                            {capitalizeWords(skill)}
-                          </span>
-                        );
-                      })}
+                      {Array.isArray(person.can_offer) && person.can_offer.map((skill: string, i: number) => (
+                        <span key={i} style={{
+                          fontSize: '0.75rem',
+                          background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(69, 103, 204, 0.05) 100%)',
+                          border: '1px solid rgba(69, 103, 204, 0.3)',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          color: 'var(--primary)',
+                          fontWeight: '500'
+                        }}>
+                          {capitalizeWords(skill)}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -823,24 +837,19 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                       Looking For
                     </h3>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      {Array.isArray(person.needs) && person.needs.map((need: string, i: number) => {
-                        const capitalizeWords = (str: string) => {
-                          return str.replace(/\b\w/g, (char) => char.toUpperCase());
-                        };
-                        return (
-                          <span key={i} style={{
-                            fontSize: '0.75rem',
-                            background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(196, 65, 185, 0.05) 100%)',
-                            border: '1px solid rgba(196, 65, 185, 0.3)',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            color: 'var(--accent)',
-                            fontWeight: '500'
-                          }}>
-                            {capitalizeWords(need)}
-                          </span>
-                        );
-                      })}
+                      {Array.isArray(person.needs) && person.needs.map((need: string, i: number) => (
+                        <span key={i} style={{
+                          fontSize: '0.75rem',
+                          background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(196, 65, 185, 0.05) 100%)',
+                          border: '1px solid rgba(196, 65, 185, 0.3)',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          color: 'var(--accent)',
+                          fontWeight: '500'
+                        }}>
+                          {capitalizeWords(need)}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -1053,7 +1062,7 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                       color: 'var(--primary)',
                       fontWeight: '500'
                     }}>
-                      {offer}
+                      {capitalizeWords(offer)}
                     </span>
                   ))}
                 </div>
@@ -1077,7 +1086,7 @@ export default function Connections({ selectedPersonName, onSelectPerson, connec
                       color: 'var(--accent)',
                       fontWeight: '500'
                     }}>
-                      {need}
+                      {capitalizeWords(need)}
                     </span>
                   ))}
                 </div>

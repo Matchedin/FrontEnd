@@ -169,7 +169,9 @@ export default function PortfolioPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
+            <motion.div>
             <ConnectionTypes industryMatches={connectionTypes} />
+            </motion.div>
             <ResumeInsights resumeText={resumeText} connectionData={connectionData} />
           </div>
         </div>
