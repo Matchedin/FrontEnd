@@ -11,13 +11,13 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
   const [loading, setLoading] = useState(false);
 
   const containerVariants = {
-    hidden: { transition: { staggerChildren: 0.04 } },
-    show: { transition: { staggerChildren: 0.06 } }
+    hidden: {},
+    show: { transition: { staggerChildren: 0.0 } }
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 8 },
-    show: { opacity: 1, y: 0 }
+    show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.32, delay: i * 0.08 } })
   };
 
   if (!industryMatches) {
@@ -193,19 +193,19 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedIndustry ?? 'none'}
-              style={{ maxHeight: '420px', overflowY: 'auto' }}
+              style={{ height: '275px', overflowY: 'auto' }}
               variants={containerVariants}
               initial="hidden"
               animate="show"
               exit="hidden"
             >
               {industryUsers.length > 0 ? (
-                industryUsers.map((user: Profile) => (
+                industryUsers.map((user: Profile, i: number) => (
                   <motion.div
                     key={user.profileId}
+                    custom={i}
                     variants={itemVariants}
                     exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.28 }}
                     style={{
                       marginBottom: '16px',
                       padding: '16px',
