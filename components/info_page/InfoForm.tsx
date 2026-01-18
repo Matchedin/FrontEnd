@@ -138,11 +138,11 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
 
       // Change loading step to analyzing
       setLoadingStep('analyzing');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 4000));
 
       // Change loading step to finalizing
       setLoadingStep('finalizing');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       setError('');
       

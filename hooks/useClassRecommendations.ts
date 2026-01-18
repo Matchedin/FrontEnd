@@ -87,6 +87,22 @@ export function useClassRecommendations(): UseClassRecommendationsReturn {
     setError('');
 
     try {
+      // First, try to load classes from temp folder cache
+      console.log('Checking for cached classes in temp folder...');
+      const tempResponse = await fetch('/api/temp-management?action=get-json&filename=classes.json', {
+        method: 'GET',
+      });
+
+      if (tempResponse.ok) {
+        const cachedData = await tempResponse.json();
+        console.log('Loaded classes from cache:', cachedData);
+        setRecommendations(cachedData.classes || cachedData || []);
+        setIsSearching(false);
+        return;
+      }
+
+      // Cache miss or doesn't exist, fetch from API
+      console.log('Cache miss, fetching from API...');
       const response = await fetch('/api/lookup-skill-classes', {
         method: 'POST',
         headers: {
@@ -123,6 +139,21 @@ export function useClassRecommendations(): UseClassRecommendationsReturn {
       
       console.log('Parsed classes:', classes);
       setRecommendations(classes);
+
+      // Save classes to temp for future use
+      console.log('Saving classes to temp folder...');
+      await fetch('/api/temp-management?action=save-json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: { classes },
+          filename: 'classes.json'
+        }),
+      }).catch(() => {
+        // Silently fail if caching doesn't work
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);

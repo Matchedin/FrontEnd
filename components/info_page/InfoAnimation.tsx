@@ -188,7 +188,7 @@ export default function InfoAnimation() {
           textAlign: 'center'
         }}
       >
-        <div style={{ fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.7)', marginBottom: '8px' }}>
+        <div style={{ fontSize: '1rem', color: 'rgba(0, 0, 0, 0.7)', marginBottom: '8px' }}>
           Building your network...
         </div>
         <div

@@ -34,7 +34,7 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
         setResumeName(filename);
         setResumeFile(new File([data.text], filename, { type: 'text/plain' }));
       } catch (err) {
-        setError('Could not find resume file in temp folder');
+        setError(`Could not find resume file in temp folder${err}`);
         // Silently fail - this is expected when no data has been uploaded
       } finally {
         setIsLoading(false);
