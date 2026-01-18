@@ -58,9 +58,19 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
     try {
       // Step 1: Clear temp folder
       console.log('Clearing temp folder...');
-      await fetch('/api/temp-management?action=clear', {
-        method: 'POST',
-      });
+      try {
+        const clearResp = await fetch('/api/temp-management?action=clear', {
+          method: 'POST',
+        });
+        if (!clearResp.ok) {
+          const errText = await clearResp.text();
+          console.error('Temp clear failed:', errText);
+        } else {
+          console.log('Temp clear response:', await clearResp.clone().json());
+        }
+      } catch (err) {
+        console.error('Temp clear fetch error:', err);
+      }
 
       // Step 2: Upload resume and get matches
       console.log('Uploading resume and fetching matches...');

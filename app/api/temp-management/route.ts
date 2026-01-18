@@ -5,10 +5,11 @@ import path from 'path';
 export async function POST(request: NextRequest) {
   try {
     const action = request.nextUrl.searchParams.get('action');
+    const tempDir = path.join(process.cwd(), 'temp');
+    fs.mkdir(tempDir, { recursive: true });
 
     if (action === 'clear') {
       // Clear temp folder
-      const tempDir = path.join(process.cwd(), 'temp');
       try {
         const files = await fs.readdir(tempDir);
         for (const file of files) {
@@ -25,7 +26,6 @@ export async function POST(request: NextRequest) {
     if (action === 'save-json') {
       // Save JSON data to temp folder
       const { data, filename } = await request.json();
-      const tempDir = path.join(process.cwd(), 'temp');
       
       // Create temp dir if it doesn't exist
       try {
@@ -50,8 +50,6 @@ export async function POST(request: NextRequest) {
       if (!file) {
         return NextResponse.json({ error: 'No file provided' }, { status: 400 });
       }
-
-      const tempDir = path.join(process.cwd(), 'temp');
       
       // Create temp dir if it doesn't exist
       try {

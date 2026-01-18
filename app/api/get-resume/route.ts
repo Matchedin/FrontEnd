@@ -6,6 +6,8 @@ export async function GET() {
   try {
     // Look for any .docx file in the temp folder
     const tempDir = path.join(process.cwd(), 'temp');
+    await fs.mkdir(tempDir, { recursive: true });
+
     const files = await fs.readdir(tempDir);
     const docxFile = files.find(file => file.endsWith('.docx'));
 

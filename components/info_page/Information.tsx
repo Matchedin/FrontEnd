@@ -20,10 +20,16 @@ export default function Information() {
           sessionStorage.setItem('resumeFileName', resumeFile.name);
         }
       };
+      reader.onloadend = () => {
+        // Redirect to portfolio page after reading file
+        router.push('/portfolio');
+      }
+
       reader.readAsArrayBuffer(resumeFile);
+    } else {
+      // Redirect to portfolio page
+      router.push('/portfolio');
     }
-    // Redirect to portfolio page
-    router.push('/portfolio');
   };
 
   return (

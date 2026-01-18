@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiUrl = process.env.SSE_BASE_URL + '/Gemini/lookupSkillClasses';
+    const apiUrl = process.env.NEXT_PUBLIC_SSE_BASE_URL + '/Gemini/lookupSkillClasses';
     console.log('Calling API:', apiUrl);
     console.log('University:', university);
     console.log('Skills:', skills);
