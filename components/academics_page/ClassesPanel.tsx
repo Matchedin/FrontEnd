@@ -37,7 +37,7 @@ export default function ClassesPanel({ classes, isLoading }: ClassesPanelProps) 
           fontSize: '0.95rem'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🔍</div>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}></div>
             Searching for classes...
           </div>
         </div>

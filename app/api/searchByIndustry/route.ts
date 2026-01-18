@@ -4,7 +4,7 @@ import type { Profile } from '../../../types/profile';
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('q') || '';
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SSE_BASE_URL}/database/searchByIndustry?query=${encodeURIComponent(query)}`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SSE_BASE_URL}/Database/searchByIndustry?query=${encodeURIComponent(query)}`);
     if (!res.ok) {
       return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: res.status });
     }

@@ -226,7 +226,7 @@ export default function ResumeInsights({ resumeText, connectionData }: ResumeIns
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text'
       }}>
-        📊 Resume Insights
+        Resume Insights
       </h2>
       <p style={{
         fontSize: '1.05rem',
@@ -249,7 +249,7 @@ export default function ResumeInsights({ resumeText, connectionData }: ResumeIns
             alignItems: 'center',
             gap: '8px'
           }}>
-            📋 Characteristics
+            Characteristics
           </h3>
           <div style={{
             display: 'grid',
@@ -320,7 +320,7 @@ export default function ResumeInsights({ resumeText, connectionData }: ResumeIns
             alignItems: 'center',
             gap: '8px'
           }}>
-            ✨ Strengths
+              Strengths
           </h3>
           <div style={{
             display: 'grid',

@@ -2,13 +2,10 @@
 
 import React, { useState } from 'react';
 import ResumeReview from './ResumeReview';
-import PDFViewer from './PDFViewer';
-import ClassesPanel from './ClassesPanel';
 import { useClassRecommendations } from '@/hooks/useClassRecommendations';
 
 export default function AcademicsContent() {
   const [activeTab, setActiveTab] = useState<'resume' | 'classes'>('resume');
-  const [pdfPath, setPdfPath] = useState<string>('');
   
   // Use the class recommendations hook for lazy loading
   // The hook automatically loads recommendations when resume data is available
@@ -16,12 +13,10 @@ export default function AcademicsContent() {
 
   return (
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: '32px',
+      display: 'block',
       minHeight: '700px'
     }}>
-      {/* Left Side - Forms */}
+      {/* Content */}
       <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -35,6 +30,7 @@ export default function AcademicsContent() {
           <button
             onClick={() => setActiveTab('resume')}
             style={{
+              flex: 1,
               padding: '12px 24px',
               background: activeTab === 'resume' 
                 ? 'linear-gradient(135deg, var(--primary) 0%, rgba(69, 103, 204, 0.8) 100%)'
@@ -69,6 +65,7 @@ export default function AcademicsContent() {
           <button
             onClick={() => setActiveTab('classes')}
             style={{
+              flex: 1,
               padding: '12px 24px',
               background: activeTab === 'classes' 
                 ? 'linear-gradient(135deg, var(--accent) 0%, rgba(196, 65, 185, 0.8) 100%)'
@@ -106,7 +103,7 @@ export default function AcademicsContent() {
           flex: 1,
           overflowY: 'auto'
         }}>
-          {activeTab === 'resume' && <ResumeReview onPdfPathChange={setPdfPath} />}
+          {activeTab === 'resume' && <ResumeReview />}
           {activeTab === 'classes' && (
             <div style={{
               background: 'rgba(255, 255, 255, 0.95)',
@@ -153,7 +150,6 @@ export default function AcademicsContent() {
                   textAlign: 'center',
                   marginBottom: '24px'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px', animation: 'pulse 2s ease-in-out infinite' }}>🔍</div>
                   <p style={{ margin: '0', fontSize: '1.1rem', color: 'rgba(32, 32, 32, 0.7)', fontWeight: '500' }}>Searching for the best classes for you...</p>
                 </div>
               )}
@@ -216,7 +212,7 @@ export default function AcademicsContent() {
                   textAlign: 'center',
                   marginBottom: '24px'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📚</div>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}></div>
                   <p style={{ margin: '0', fontSize: '1rem', color: 'rgba(32, 32, 32, 0.6)' }}>No classes found. Please ensure you have uploaded your resume.</p>
                 </div>
               )}
@@ -236,23 +232,6 @@ export default function AcademicsContent() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Right Side - PDF/Classes Viewer */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: '18px',
-        padding: '24px',
-        border: '1px solid rgba(69, 103, 204, 0.2)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        height: 'fit-content',
-        position: 'sticky',
-        top: '20px',
-        marginTop: '65px'
-      }}>
-        {activeTab === 'resume' && <PDFViewer filePath={pdfPath} />}
-        {activeTab === 'classes' && <ClassesPanel classes={classRecommendations.recommendations} isLoading={classRecommendations.isSearching} />}
       </div>
     </div>
   );

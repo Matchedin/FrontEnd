@@ -25,7 +25,7 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
   useEffect(() => {
     const loadResumeFromTemp = async () => {
       try {
-        const response = await fetch('/api/get-resume');
+        const response = await fetch('/api/get-resume-text');
         if (!response.ok) {
           throw new Error('Resume file not found in temp folder');
         }
@@ -105,6 +105,7 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
       }
 
       const data = await response.json();
+      console.log(`[ClassRecommendations] Received ${data.classes?.length || 0} classes:`, data.classes);
       setRecommendations(data.classes || []);
       onClassesChange?.(data.classes || []);
     } catch (err) {
@@ -295,7 +296,7 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
                 }
               }}
             >
-              {isSearching ? '🔍 Finding Classes...' : '🎯 Get Recommendations'}
+              {isSearching ? ' Finding Classes...' : ' Get Recommendations'}
             </button>
           </>
         )}
@@ -303,7 +304,7 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
 
       {/* Results */}
       {hasSearched && recommendations.length > 0 && (
-        <div style={{ animation: 'fadeIn 0.4s ease-out', display: 'none' }}>
+        <div style={{ animation: 'fadeIn 0.4s ease-out', marginTop: '32px', width: '100%', boxSizing: 'border-box' }}>
           <h3 style={{
             fontSize: '1.6rem',
             fontWeight: 'bold',
@@ -316,49 +317,116 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
           }}>
             Recommended Classes
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-            {recommendations.map((classItem, i) => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', minHeight: '600px', alignItems: 'start', width: '100%' }}>
+            {/* Top recommendation on the left - takes full height */}
+            {recommendations.length > 0 && (
               <div
-                key={i}
                 style={{
-                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
                   backdropFilter: 'blur(20px)',
                   borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(196, 65, 185, 0.3)',
+                  padding: '32px',
+                  border: '1px solid rgba(196, 65, 185, 0.4)',
                   transition: 'all 0.3s ease',
-                  animation: `slideUp 0.6s ease-out ${i * 0.1}s backwards`
+                  animation: 'slideUp 0.6s ease-out 0s backwards',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(196, 65, 185, 0.2)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(196, 65, 185, 0.3)';
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-                  (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)';
+                  (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)';
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.boxShadow = 'none';
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                  (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)';
+                  (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)';
                 }}
               >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '1.5rem' }}>⭐</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent)', textTransform: 'uppercase' }}>Top Recommendation</span>
+                </div>
                 <h4 style={{
-                  fontSize: '1.2rem',
+                  fontSize: '1.8rem',
                   fontWeight: '700',
-                  marginBottom: '10px',
+                  marginBottom: '16px',
                   color: 'var(--accent)',
-                  margin: 0
+                  margin: '0 0 16px 0'
                 }}>
-                  {classItem.className}
+                  {recommendations[0].className}
                 </h4>
                 <p style={{
-                  fontSize: '0.95rem',
+                  fontSize: '1rem',
                   color: 'rgba(32, 32, 32, 0.8)',
-                  lineHeight: '1.6',
+                  lineHeight: '1.7',
                   margin: 0
                 }}>
-                  {classItem.description}
+                  {recommendations[0].description}
                 </p>
               </div>
-            ))}
+            )}
+
+            {/* Other recommendations on the right - scrollable */}
+            {recommendations.length > 1 && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                maxHeight: '600px',
+                overflowY: 'auto',
+                paddingRight: '12px'
+              }}>
+                {recommendations.slice(1).map((classItem, i) => (
+                  <div
+                    key={i + 1}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                      backdropFilter: 'blur(20px)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      border: '1px solid rgba(196, 65, 185, 0.2)',
+                      transition: 'all 0.3s ease',
+                      animation: `slideUp 0.6s ease-out ${(i + 1) * 0.1}s backwards`,
+                      flex: '0 0 auto'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 20px rgba(196, 65, 185, 0.2)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                      (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                      (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)';
+                    }}
+                  >
+                    <h4 style={{
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      marginBottom: '8px',
+                      color: 'var(--accent)',
+                      margin: '0 0 8px 0'
+                    }}>
+                      {classItem.className}
+                    </h4>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      color: 'rgba(32, 32, 32, 0.75)',
+                      lineHeight: '1.5',
+                      margin: 0,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>
+                      {classItem.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -372,9 +440,9 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
           textAlign: 'center',
           border: '1px solid rgba(196, 65, 185, 0.2)',
           animation: 'fadeIn 0.4s ease-out',
-          display: 'none'
+          marginTop: '32px'
         }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🔍</div>
+          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}></div>
           <p style={{ fontSize: '1rem', color: 'rgba(32, 32, 32, 0.7)', margin: 0, fontWeight: '500' }}>
             No classes found for the selected criteria. Try adjusting your skills or university.
           </p>

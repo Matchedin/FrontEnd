@@ -18,7 +18,6 @@ export default function AcademicsPage() {
     console.log('Academics checking - userInfo exists:', hasUserInfo);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasData(hasUserInfo);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsChecked(true);
   }, []);
 
@@ -44,12 +43,20 @@ export default function AcademicsPage() {
           background: 'linear-gradient(135deg, #F5F5F5 0%, #E8E8F0 100%)',
           minHeight: 'calc(100vh - 80px)',
           position: 'relative',
-          paddingTop: '200px',
-          paddingBottom: '30px',
-          filter: isChecked && !hasData ? 'blur(4px)' : 'none',
-          pointerEvents: isChecked && !hasData ? 'none' : 'auto',
-          transition: 'filter 0.3s ease'
+          paddingTop: '100px',
+          paddingBottom: '30px'
         }}>
+        {isChecked && !hasData && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backdropFilter: 'blur(4px)',
+              pointerEvents: 'auto',
+              zIndex: 20
+            }}
+          />
+        )}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
           <AcademicsBackground />
           <AcademicsContent />
