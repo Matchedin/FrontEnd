@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import StaticHeader from '../../components/layout/StaticHeader';
 import PortfolioBackground from '../../components/portfolio_page/PortfolioBackground';
 import PortfolioHeader from '../../components/portfolio_page/PortfolioHeader';
@@ -25,12 +26,12 @@ export default function PortfolioPage() {
     const userInfoStr = sessionStorage.getItem('userInfo');
     const hasUserInfo = !!userInfoStr;
     console.log('Portfolio checking - userInfo exists:', hasUserInfo);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasData(hasUserInfo);
     setIsChecked(true);
   }, []);
 
   // Load session storage data
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const connectionsDataStr = sessionStorage.getItem('connectionsData');
     const userInfoStr = sessionStorage.getItem('userInfo');
@@ -57,6 +58,7 @@ export default function PortfolioPage() {
     
     console.log('Portfolio data loaded - hasUserInfo:', hasUserInfo);
     
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUserInfo(info);
     setConnectionData(connections);
     setConnectionTypes(typeCounts);
@@ -67,7 +69,7 @@ export default function PortfolioPage() {
   useEffect(() => {
     const loadResume = async () => {
       try {
-        const response = await fetch('/api/get-resume');
+        const response = await fetch('/api/get-resume-text');
         if (response.ok) {
           const data = await response.json();
           setResumeText(data.text || '');
@@ -103,81 +105,73 @@ export default function PortfolioPage() {
           minHeight: 'calc(100vh - 80px)',
           position: 'relative',
           paddingTop: '60px',
-          paddingBottom: '100px',
-          filter: isChecked && !hasData ? 'blur(4px)' : 'none',
-          pointerEvents: isChecked && !hasData ? 'none' : 'auto',
-          transition: 'filter 0.3s ease'
+          paddingBottom: '100px'
         }}>
+        {isChecked && !hasData && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backdropFilter: 'blur(4px)',
+              pointerEvents: 'auto',
+              zIndex: 10
+            }}
+          />
+        )}
         <PortfolioBackground />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           <PortfolioHeader userInfo={userInfo} />
 
-          {/* Tab Navigation */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '48px',
-            marginBottom: '32px'
-          }}>
-            <div style={{
-              display: 'flex',
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '16px',
-              padding: '4px',
-              border: '1px solid rgba(69, 103, 204, 0.2)',
-              boxShadow: '0 4px 16px rgba(69, 103, 204, 0.1)'
-            }}>
-              <button
-                onClick={() => setActiveTab('network')}
+          {/* Quick Links */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '36px', marginBottom: '48px' }}>
+            <Link href="/academics">
+              <motion.div
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
                 style={{
-                  padding: '12px 24px',
-                  borderRadius: '12px',
+                  padding: '18px 24px',
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
                   border: 'none',
-                  background: activeTab === 'network' ? 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)' : 'transparent',
-                  color: activeTab === 'network' ? '#ffffff' : 'var(--foreground)',
-                  fontWeight: '600',
-                  fontSize: '1rem',
+                  borderRadius: '12px',
                   cursor: 'pointer',
+                  color: '#FFFFFF',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  textAlign: 'center',
                   transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.2)'
                 }}
               >
-                🌐 Network
-              </button>
-              <button
-                onClick={() => setActiveTab('insights')}
+                Academics
+              </motion.div>
+            </Link>
+            <Link href="/network">
+              <motion.div
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
                 style={{
-                  padding: '12px 24px',
-                  borderRadius: '12px',
+                  padding: '18px 24px',
+                  background: 'linear-gradient(135deg, #A855F7 0%, #9333EA 100%)',
                   border: 'none',
-                  background: activeTab === 'insights' ? 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)' : 'transparent',
-                  color: activeTab === 'insights' ? '#ffffff' : 'var(--foreground)',
-                  fontWeight: '600',
-                  fontSize: '1rem',
+                  borderRadius: '12px',
                   cursor: 'pointer',
+                  color: '#FFFFFF',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  textAlign: 'center',
                   transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  boxShadow: '0 4px 15px rgba(168, 85, 247, 0.2)'
                 }}
               >
-                📊 Insights
-              </button>
-            </div>
+                Network
+              </motion.div>
+            </Link>
           </div>
 
-          {/* Tab Content */}
-          <div style={{ marginTop: '24px' }}>
-            {activeTab === 'network' && (
-              <ConnectionTypes industryMatches={connectionTypes} />
-            )}
-            {activeTab === 'insights' && (
-              <ResumeInsights resumeText={resumeText} connectionData={connectionData} />
-            )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
+            <ConnectionTypes industryMatches={connectionTypes} />
+            <ResumeInsights resumeText={resumeText} connectionData={connectionData} />
           </div>
         </div>
       </motion.div>

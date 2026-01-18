@@ -7,19 +7,18 @@ interface ReviewResult {
   improvements: string[];
   overallScore: number;
   recommendations: string[];
+  annotatedPdfUrl?: string;
+  metadata?: Record<string, unknown>;
 }
 
-interface ResumeReviewProps {
-  onPdfPathChange?: (path: string) => void;
-}
-
-export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
+export default function ResumeReview() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeName, setResumeName] = useState<string>('');
   const [isReviewing, setIsReviewing] = useState(false);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   // Load resume from temp folder on mount
   useEffect(() => {
@@ -29,12 +28,12 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
         if (!response.ok) {
           throw new Error('Resume file not found in temp folder');
         }
-        const data = await response.json();
-        const filename = data.filename || 'resume.docx';
+        const blob = await response.blob();
+        const filename = response.headers.get('X-Resume-Filename') || 'resume.docx';
         setResumeName(filename);
-        setResumeFile(new File([data.text], filename, { type: 'text/plain' }));
+        setResumeFile(new File([blob], filename, { type: blob.type }));
       } catch (err) {
-        setError(`Could not find resume file in temp folder${err}`);
+        setError(`Could not find resume file in temp folder: ${err}`);
         // Silently fail - this is expected when no data has been uploaded
       } finally {
         setIsLoading(false);
@@ -43,6 +42,35 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
 
     loadResumeFromTemp();
   }, []);
+
+  // Timer for dynamic button text
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isReviewing) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isReviewing]);
+
+  const getButtonText = () => {
+    if (!isReviewing) return 'Get Review';
+    
+    const messages = [
+      'Analyzing Resume...',
+      'Extracting Content...',
+      'Checking Structure...',
+      'Generating Feedback...',
+      'Polishing Recommendations...'
+    ];
+    
+    const messageIndex = Math.floor(elapsedTime / 2) % messages.length;
+    return messages[messageIndex];
+  };
+
 
   return (
     <div>
@@ -84,11 +112,13 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
               background: 'rgba(239, 68, 68, 0.1)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
               borderRadius: '8px',
-              padding: '12px',
+              padding: '16px',
               marginBottom: '20px',
               color: '#dc2626',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
+              lineHeight: '1.5'
             }}>
+              <p style={{ fontWeight: '600', marginBottom: '8px', margin: '0 0 8px 0' }}>Error:</p>
               {error}
             </div>
           )}
@@ -128,37 +158,78 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
           <button
             onClick={async () => {
               setIsReviewing(true);
+              setElapsedTime(0);
               setError('');
 
               try {
-                // Show mock review for now
+                if (!resumeFile) {
+                  setError('No resume file selected');
+                  setIsReviewing(false);
+                  return;
+                }
+
+                // Create FormData to send to annotation endpoint
+                const formData = new FormData();
+                formData.append('file', resumeFile);
+
+                // Call the annotation endpoint
+                const response = await fetch('/api/resumeAnnotations', {
+                  method: 'POST',
+                  body: formData,
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || 'Failed to annotate resume');
+                }
+
+                // The annotation service now returns JSON with base64 PDF and metadata
+                const responseData = await response.json();
+                console.log(`[ResumeReview] Received annotation response:`, responseData);
+                
+                if (!responseData.pdf) {
+                  throw new Error('No PDF in response');
+                }
+
+                // Convert base64 PDF to blob
+                const pdfBinary = atob(responseData.pdf);
+                const pdfBytes = new Uint8Array(pdfBinary.length);
+                for (let i = 0; i < pdfBinary.length; i++) {
+                  pdfBytes[i] = pdfBinary.charCodeAt(i);
+                }
+                const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                // Parse annotations from metadata or use mock data
+                const metadata = responseData.metadata || {};
+                
                 const mockReview: ReviewResult = {
-                  strengths: [
+                  strengths: metadata.strengths || [
                     'Clear structure and formatting',
                     'Relevant skills highlighted',
                     'Good use of action verbs',
                     'Quantifiable achievements included'
                   ],
-                  improvements: [
+                  improvements: metadata.improvements || [
                     'Add more metrics to technical skills',
                     'Include certifications section',
                     'Expand project descriptions',
                     'Add leadership experience examples'
                   ],
-                  overallScore: 78,
-                  recommendations: [
+                  overallScore: metadata.overall_score || metadata.overallScore || 78,
+                  recommendations: metadata.recommendations || [
                     'Consider adding a professional summary',
                     'Tailor resume to specific job descriptions',
                     'Include links to portfolio or GitHub',
                     'Proofread for any typos or inconsistencies'
-                  ]
+                  ],
+                  annotatedPdfUrl: pdfUrl,
+                  metadata: metadata
                 };
 
-                // Simulate API delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
                 setReviewResult(mockReview);
               } catch (err) {
-                setError('Failed to review resume');
+                setError(err instanceof Error ? err.message : 'Failed to review resume');
                 console.error(err);
               } finally {
                 setIsReviewing(false);
@@ -192,216 +263,209 @@ export default function ResumeReview({ onPdfPathChange }: ResumeReviewProps) {
               }
             }}
           >
-            {isReviewing ? 'Analyzing...' : 'Get Review'}
+            {isLoading ? 'Loading Resume...' : getButtonText()}
           </button>
         </div>
       ) : (
-        <div>
-          <button
-            onClick={() => {
-              setReviewResult(null);
-              setResumeFile(null);
-            }}
-            style={{
-              padding: '12px 24px',
-              background: 'rgba(69, 103, 204, 0.1)',
-              color: 'var(--primary)',
-              border: '1px solid rgba(69, 103, 204, 0.3)',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              marginBottom: '32px',
-              transition: 'all 0.3s ease',
-              fontSize: '0.95rem'
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'rgba(69, 103, 204, 0.2)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateX(-4px)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'rgba(69, 103, 204, 0.1)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
-            }}
-          >
-            ← Review Another Resume
-          </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+          {/* Left Side - Annotations */}
+          <div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
-            {/* Score Card */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '18px',
-              padding: '32px',
-              border: '1px solid rgba(69, 103, 204, 0.3)',
-              textAlign: 'center',
-              transition: 'all 0.3s ease',
-              animation: 'fadeInUp 0.6s ease-out 0.1s backwards'
-            }}>
-              <p style={{ fontSize: '0.9rem', color: 'rgba(32, 32, 32, 0.6)', margin: '0 0 16px 0', fontWeight: '500' }}>
-                Overall Score
-              </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+              {/* Score Card */}
               <div style={{
-                fontSize: '3.5rem',
-                fontWeight: 'bold',
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '8px'
+                background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '18px',
+                padding: '20px 24px',
+                border: '1px solid rgba(69, 103, 204, 0.3)',
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
+                animation: 'fadeInUp 0.6s ease-out 0.1s backwards',
+                height: '160px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center'
               }}>
-                {reviewResult.overallScore}%
+                <p style={{ fontSize: '0.8rem', color: 'rgba(32, 32, 32, 0.6)', margin: '0 0 8px 0', fontWeight: '500' }}>
+                  Overall Score
+                </p>
+                <div style={{
+                  fontSize: '2.8rem',
+                  fontWeight: 'bold',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  marginBottom: '4px',
+                  lineHeight: '1'
+                }}>
+                  {reviewResult.overallScore}%
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'rgba(32, 32, 32, 0.6)', margin: 0 }}>
+                  Good room for improvement
+                </p>
               </div>
-              <p style={{ fontSize: '0.85rem', color: 'rgba(32, 32, 32, 0.6)', margin: 0 }}>
-                Good room for improvement
-              </p>
+
+              {/* File Info Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(69, 103, 204, 0.1) 100%)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '18px',
+                padding: '20px 24px',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                animation: 'fadeInUp 0.6s ease-out 0.2s backwards',
+                height: '160px'
+              }}>
+                <p style={{ fontSize: '0.8rem', color: 'rgba(32, 32, 32, 0.6)', margin: '0 0 8px 0', fontWeight: '500' }}>
+                  File Analyzed
+                </p>
+                <p style={{ fontSize: '0.95rem', color: 'var(--foreground)', margin: 0, fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {resumeFile?.name}
+                </p>
+              </div>
             </div>
 
-            {/* File Info Card */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(69, 103, 204, 0.1) 100%)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '18px',
-              padding: '32px',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              animation: 'fadeInUp 0.6s ease-out 0.2s backwards'
-            }}>
-              <p style={{ fontSize: '0.9rem', color: 'rgba(32, 32, 32, 0.6)', margin: '0 0 12px 0', fontWeight: '500' }}>
-                File Analyzed
-              </p>
-              <p style={{ fontSize: '1.1rem', color: 'var(--foreground)', margin: 0, fontWeight: '600' }}>
-                {resumeFile?.name}
-              </p>
-            </div>
+            {/* Annotations Section */}
+            {reviewResult.metadata && Array.isArray(reviewResult.metadata.annotations) && (
+              <div style={{
+                marginTop: '20px',
+                animation: 'fadeInUp 0.6s ease-out 0.6s backwards',
+                height: '600px',
+                overflow: 'hidden'
+              }}>
+                <h3 style={{
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  marginBottom: '12px',
+                  color: '#2563eb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                   Annotations ({reviewResult.metadata.annotations.length})
+                </h3>
+                
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)'
+                }}>
+                  <ol style={{ 
+                    margin: 0, 
+                    paddingLeft: '20px',
+                    listStyle: 'none',
+                    maxHeight: '600px',
+                    overflowY: 'auto',
+                    paddingRight: '12px'
+                  }}>
+                  {(reviewResult.metadata.annotations as Array<{
+                    id: string;
+                    phrase: string;
+                    kind: string;
+                    color: string;
+                    comment: string;
+                  }>).map((annotation, index) => {
+                    return (
+                      <li key={annotation.id} style={{
+                        marginBottom: '8px',
+                        paddingLeft: '24px',
+                        position: 'relative',
+                        fontSize: '0.85rem',
+                        lineHeight: '1.4',
+                        color: 'rgba(32, 32, 32, 0.8)'
+                      }}>
+                        <span style={{
+                          position: 'absolute',
+                          left: 0,
+                          fontWeight: '700',
+                          color: annotation.color === 'red' ? '#dc2626' : '#d97706',
+                          minWidth: '20px'
+                        }}>
+                          {index + 1}.
+                        </span>
+                        <span style={{
+                          fontWeight: '600',
+                          color: annotation.color === 'red' ? '#dc2626' : '#d97706'
+                        }}>
+                          {annotation.phrase}
+                        </span>
+                        <span style={{
+                          display: 'block',
+                          fontSize: '0.8rem',
+                          color: 'rgba(32, 32, 32, 0.65)',
+                          marginTop: '2px'
+                        }}>
+                          {annotation.comment}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+                </div>
+              </div>
+            )}
+            
+            {/* Raw Metadata Section (fallback for non-annotation metadata) */}
+            {reviewResult.metadata && Object.keys(reviewResult.metadata).length > 0 && !Array.isArray(reviewResult.metadata.annotations) && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '18px',
+                padding: '24px',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                marginTop: '24px',
+                animation: 'fadeInUp 0.6s ease-out 0.6s backwards'
+              }}>
+                <h3 style={{
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  color: '#2563eb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  📊 Raw Metadata
+                </h3>
+                <div style={{
+                  background: 'rgba(32, 32, 32, 0.05)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  fontSize: '0.85rem',
+                  fontFamily: 'monospace',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  color: 'rgba(32, 32, 32, 0.8)',
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}>
+                  {JSON.stringify(reviewResult.metadata, null, 2)}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Strengths */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '18px',
-            padding: '32px',
-            border: '1px solid rgba(34, 197, 94, 0.3)',
-            marginBottom: '24px',
-            animation: 'fadeInUp 0.6s ease-out 0.3s backwards'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.3rem', 
-              fontWeight: '700', 
-              marginBottom: '20px', 
-              color: '#16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              ✅ Your Strengths
-            </h3>
-            <ul style={{ margin: 0, paddingLeft: '0', color: 'rgba(32, 32, 32, 0.8)', listStyle: 'none' }}>
-              {reviewResult.strengths.map((strength, i) => (
-                <li key={i} style={{ 
-                  marginBottom: '12px', 
-                  fontSize: '0.95rem',
-                  paddingLeft: '32px',
-                  position: 'relative',
-                  lineHeight: '1.6'
-                }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: '0',
-                    color: '#16a34a',
-                    fontWeight: '600'
-                  }}>✓</span>
-                  {strength}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Improvements */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(234, 179, 8, 0.08) 100%)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '18px',
-            padding: '32px',
-            border: '1px solid rgba(249, 115, 22, 0.3)',
-            marginBottom: '24px',
-            animation: 'fadeInUp 0.6s ease-out 0.4s backwards'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.3rem', 
-              fontWeight: '700', 
-              marginBottom: '20px', 
-              color: '#ea580c',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              💡 Areas for Improvement
-            </h3>
-            <ul style={{ margin: 0, paddingLeft: '0', color: 'rgba(32, 32, 32, 0.8)', listStyle: 'none' }}>
-              {reviewResult.improvements.map((improvement, i) => (
-                <li key={i} style={{ 
-                  marginBottom: '12px', 
-                  fontSize: '0.95rem',
-                  paddingLeft: '32px',
-                  position: 'relative',
-                  lineHeight: '1.6'
-                }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: '0',
-                    color: '#ea580c',
-                    fontWeight: '600'
-                  }}>→</span>
-                  {improvement}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Recommendations */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '18px',
-            padding: '32px',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
-            animation: 'fadeInUp 0.6s ease-out 0.5s backwards'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.3rem', 
-              fontWeight: '700', 
-              marginBottom: '20px', 
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              🎯 Recommendations
-            </h3>
-            <ul style={{ margin: 0, paddingLeft: '0', color: 'rgba(32, 32, 32, 0.8)', listStyle: 'none' }}>
-              {reviewResult.recommendations.map((rec, i) => (
-                <li key={i} style={{ 
-                  marginBottom: '12px', 
-                  fontSize: '0.95rem',
-                  paddingLeft: '32px',
-                  position: 'relative',
-                  lineHeight: '1.6'
-                }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: '0',
-                    color: '#2563eb',
-                    fontWeight: '600'
-                  }}>{i + 1}.</span>
-                  {rec}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Right Side - PDF Viewer */}
+          {reviewResult?.annotatedPdfUrl && (
+            <iframe
+              src={reviewResult.annotatedPdfUrl}
+              style={{
+                width: '100%',
+                height: '800px',
+                border: 'none',
+                borderRadius: '12px',
+                position: 'sticky',
+                top: '100px'
+              }}
+            />
+          )}
         </div>
       )}
     </div>

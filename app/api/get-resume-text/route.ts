@@ -20,24 +20,15 @@ export async function GET() {
 
     const filePath = path.join(tempDir, docxFile);
     
-    // Read the file as a buffer
-    const fileBuffer = await fs.readFile(filePath);
-    
-    // Also extract text from the docx file for display/analysis
+    // Extract text from the docx file
     const result = await mammoth.extractRawText({ path: filePath });
     const text = result.value;
 
-    console.log('Loaded resume from:', docxFile);
+    console.log('Extracted resume text from:', docxFile);
 
-    // Return the file buffer as blob with metadata
-    return new Response(fileBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="${docxFile}"`,
-        'X-Resume-Filename': docxFile,
-        'X-Resume-Text': encodeURIComponent(text.substring(0, 1000)) // First 1000 chars for reference
-      }
+    return Response.json({ 
+      text, 
+      filename: docxFile 
     });
   } catch (error) {
     console.error('Error reading resume:', error);

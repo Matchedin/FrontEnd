@@ -1,27 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import ResumeReview from './ResumeReview';
-import PDFViewer from './PDFViewer';
-import ClassesPanel from './ClassesPanel';
 import { useClassRecommendations } from '@/hooks/useClassRecommendations';
 
 export default function AcademicsContent() {
   const [activeTab, setActiveTab] = useState<'resume' | 'classes'>('resume');
-  const [pdfPath, setPdfPath] = useState<string>('');
-  
-  // Use the class recommendations hook for lazy loading
-  // The hook automatically loads recommendations when resume data is available
   const classRecommendations = useClassRecommendations();
 
   return (
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: '32px',
-      minHeight: '700px'
+      background: 'white',
+      borderRadius: '20px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+      padding: '32px',
+      border: '1px solid rgba(0, 0, 0, 0.05)'
     }}>
-      {/* Left Side - Forms */}
+      {/* Content */}
       <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -35,6 +31,7 @@ export default function AcademicsContent() {
           <button
             onClick={() => setActiveTab('resume')}
             style={{
+              flex: 1,
               padding: '12px 24px',
               background: activeTab === 'resume' 
                 ? 'linear-gradient(135deg, var(--primary) 0%, rgba(69, 103, 204, 0.8) 100%)'
@@ -69,6 +66,7 @@ export default function AcademicsContent() {
           <button
             onClick={() => setActiveTab('classes')}
             style={{
+              flex: 1,
               padding: '12px 24px',
               background: activeTab === 'classes' 
                 ? 'linear-gradient(135deg, var(--accent) 0%, rgba(196, 65, 185, 0.8) 100%)'
@@ -106,153 +104,189 @@ export default function AcademicsContent() {
           flex: 1,
           overflowY: 'auto'
         }}>
-          {activeTab === 'resume' && <ResumeReview onPdfPathChange={setPdfPath} />}
+          {activeTab === 'resume' && <ResumeReview />}
           {activeTab === 'classes' && (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              padding: '48px',
-              border: '1px solid rgba(196, 65, 185, 0.3)',
-              boxShadow: '0 20px 60px rgba(196, 65, 185, 0.1)',
-              animation: 'slideUp 0.6s ease-out'
-            }}>
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                marginBottom: '8px',
-                color: 'var(--foreground)',
-                background: 'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                margin: '0 0 8px 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                Classes for Your Skills
-              </h2>
-              <p style={{
-                fontSize: '0.95rem',
-                color: 'rgba(32, 32, 32, 0.7)',
-                marginBottom: '24px',
-                lineHeight: '1.6',
-                margin: '0 0 24px 0'
-              }}>
-                Based on your resume, here are recommended classes to develop your skills.
-              </p>
-              
+            <div>
               {classRecommendations.isLoading && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   backdropFilter: 'blur(20px)',
-                  borderRadius: '16px',
-                  padding: '48px 32px',
-                  border: '1px solid rgba(196, 65, 185, 0.2)',
-                  textAlign: 'center',
-                  marginBottom: '24px'
+                  borderRadius: '20px',
+                  padding: '48px',
+                  border: '1px solid rgba(196, 65, 185, 0.3)',
+                  textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px', animation: 'pulse 2s ease-in-out infinite' }}>🔍</div>
-                  <p style={{ margin: '0', fontSize: '1.1rem', color: 'rgba(32, 32, 32, 0.7)', fontWeight: '500' }}>Searching for the best classes for you...</p>
+                  <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⏳</div>
+                  <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: '500', color: 'rgba(32, 32, 32, 0.7)' }}>Loading class recommendations...</p>
                 </div>
               )}
-              
+
               {!classRecommendations.isLoading && classRecommendations.recommendations.length > 0 && (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  borderRadius: '16px',
-                  padding: '32px',
-                  border: '2px solid rgba(196, 65, 185, 0.4)',
-                  boxShadow: '0 8px 32px rgba(196, 65, 185, 0.15)',
-                  marginBottom: '24px',
-                  animation: 'slideUp 0.6s ease-out'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                    <div style={{ 
-                      fontSize: '2.5rem',
-                      filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1200%) hue-rotate(250deg)'
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  style={{ marginTop: '24px' }}>
+                  <motion.h3
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    style={{
+                      fontSize: '2rem',
+                      fontWeight: 'bold',
+                      marginBottom: '32px',
+                      color: 'var(--foreground)',
+                      background: 'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      margin: '0 0 32px 0'
                     }}>
-                      🎓
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{
-                        fontSize: '1.3rem',
-                        fontWeight: '700',
-                        margin: '0 0 8px 0',
-                        color: 'var(--accent)',
-                      }}>
-                        Top Recommendation
-                      </h3>
-                      <h4 style={{
-                        fontSize: '1.1rem',
-                        fontWeight: '600',
-                        margin: '0 0 12px 0',
-                        color: 'var(--foreground)',
-                      }}>
-                        {classRecommendations.recommendations[0]?.className}
-                      </h4>
-                      <p style={{
-                        fontSize: '0.95rem',
-                        color: 'rgba(32, 32, 32, 0.7)',
-                        lineHeight: '1.6',
-                        margin: 0
-                      }}>
-                        {classRecommendations.recommendations[0]?.description}
-                      </p>
-                    </div>
+                      Recommended Classes
+                    </motion.h3>
+
+                  <div style={{ display: 'flex', gap: '32px', minHeight: '650px' }}>
+                    {/* LEFT: Top Recommendation */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.6, delay: 0.2 }}
+                      style={{ flex: '0 0 48%' }}>
+                      {classRecommendations.recommendations[0] && (
+                        <div style={{
+                          background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '40px',
+                          border: '1px solid rgba(196, 65, 185, 0.4)',
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          transition: 'all 0.3s ease'
+                        }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(196, 65, 185, 0.3)';
+                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Recommendation</span>
+                          </div>
+                          <h4 style={{
+                            fontSize: '1.8rem',
+                            fontWeight: '700',
+                            marginBottom: '20px',
+                            color: 'var(--accent)',
+                            margin: '0 0 20px 0',
+                            lineHeight: '1.3'
+                          }}>
+                            {classRecommendations.recommendations[0].className}
+                          </h4>
+                          <p style={{
+                            fontSize: '1rem',
+                            color: 'rgba(32, 32, 32, 0.8)',
+                            lineHeight: '1.7',
+                            margin: 0
+                          }}>
+                            {classRecommendations.recommendations[0].description}
+                          </p>
+                        </div>
+                      )}
+                    </motion.div>
+
+                    {/* RIGHT: Other Classes - Scrollable */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.6, delay: 0.3 }}
+                      style={{ flex: '0 0 48%' }}>
+                      {classRecommendations.recommendations.length > 1 && (
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          height: '100%',
+                          maxHeight: '650px',
+                          overflowY: 'auto',
+                          paddingRight: '8px'
+                        }}>
+                          {classRecommendations.recommendations.slice(1).map((classItem, i) => (
+                            <motion.div
+                              key={i + 1}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, delay: 0.3 + i * 0.08 }}
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                                backdropFilter: 'blur(20px)',
+                                borderRadius: '12px',
+                                padding: '20px',
+                                border: '1px solid rgba(196, 65, 185, 0.25)',
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0
+                              }}
+                              onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 20px rgba(196, 65, 185, 0.2)';
+                                (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)';
+                                (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%)';
+                              }}
+                              onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                                (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
+                                (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(196, 65, 185, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)';
+                              }}
+                            >
+                              <h5 style={{
+                                fontSize: '1.05rem',
+                                fontWeight: '700',
+                                marginBottom: '10px',
+                                color: 'var(--accent)',
+                                margin: '0 0 10px 0',
+                                lineHeight: '1.3'
+                              }}>
+                                {classItem.className}
+                              </h5>
+                              <p style={{
+                                fontSize: '0.85rem',
+                                color: 'rgba(32, 32, 32, 0.75)',
+                                lineHeight: '1.5',
+                                margin: 0,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden'
+                              }}>
+                                {classItem.description}
+                              </p>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
                   </div>
-                </div>
+                </motion.div>
               )}
-              
+
               {!classRecommendations.isLoading && classRecommendations.recommendations.length === 0 && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   backdropFilter: 'blur(20px)',
-                  borderRadius: '16px',
-                  padding: '48px 32px',
-                  border: '1px dashed rgba(196, 65, 185, 0.3)',
-                  textAlign: 'center',
-                  marginBottom: '24px'
+                  borderRadius: '20px',
+                  padding: '48px',
+                  border: '1px solid rgba(196, 65, 185, 0.3)',
+                  textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📚</div>
-                  <p style={{ margin: '0', fontSize: '1rem', color: 'rgba(32, 32, 32, 0.6)' }}>No classes found. Please ensure you have uploaded your resume.</p>
-                </div>
-              )}
-              
-              {!classRecommendations.isLoading && classRecommendations.error && (
-                <div style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: '#dc2626',
-                  fontSize: '0.875rem'
-                }}>
-                  ⚠️ {classRecommendations.error}
+                  <p style={{ margin: 0, fontSize: '0.95rem', color: 'rgba(32, 32, 32, 0.7)' }}>No classes found. Please upload your resume to get recommendations.</p>
                 </div>
               )}
             </div>
           )}
         </div>
-      </div>
-
-      {/* Right Side - PDF/Classes Viewer */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: '18px',
-        padding: '24px',
-        border: '1px solid rgba(69, 103, 204, 0.2)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        height: 'fit-content',
-        position: 'sticky',
-        top: '20px',
-        marginTop: '65px'
-      }}>
-        {activeTab === 'resume' && <PDFViewer filePath={pdfPath} />}
-        {activeTab === 'classes' && <ClassesPanel classes={classRecommendations.recommendations} isLoading={classRecommendations.isSearching} />}
       </div>
     </div>
   );

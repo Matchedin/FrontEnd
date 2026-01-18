@@ -7,20 +7,6 @@ interface PortfolioHeaderProps {
 export default function PortfolioHeader({ userInfo }: PortfolioHeaderProps) {
   return (
     <div style={{ marginBottom: '50px', textAlign: 'center' }}>
-      <div style={{
-        display: 'inline-block',
-        background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(196, 65, 185, 0.1) 100%)',
-        border: '1px solid rgba(69, 103, 204, 0.2)',
-        borderRadius: '50px',
-        padding: '8px 16px',
-        marginBottom: '16px',
-        fontSize: '0.85rem',
-        fontWeight: '600',
-        color: 'var(--primary)',
-        backdropFilter: 'blur(10px)'
-      }}>
-        ⭐ My Portfolio
-      </div>
       <h1 style={{
         fontSize: '3rem',
         fontWeight: 'bold',
@@ -29,7 +15,8 @@ export default function PortfolioHeader({ userInfo }: PortfolioHeaderProps) {
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text',
-        lineHeight: '1.2'
+        lineHeight: '1.2',
+        marginTop: '50px'
       }}>
         {userInfo?.name || 'Your Professional Portfolio'}
       </h1>

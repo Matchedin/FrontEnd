@@ -59,8 +59,8 @@ export default function Header() {
         </nav>
 
         {/* Center - Logo/Title */}
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-3xl animate-float cursor-pointer hover:opacity-80 transition-opacity">
-          <h1 className="m-0 font-bold -tracking-wide bg-gradient-to-br from-white via-indigo-100 to-white bg-[length:200%_200%] bg-clip-text text-transparent animate-shimmer">
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-3xl cursor-pointer hover:opacity-80">
+          <h1 className="m-0 font-bold -tracking-wide bg-gradient-to-br from-white via-indigo-100 to-white bg-[length:200%_200%] bg-clip-text text-transparent">
             MatchedIn
           </h1>
         </Link>

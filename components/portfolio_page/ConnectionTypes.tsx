@@ -141,7 +141,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
           )}
         </div>
       </div>
-      <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(69, 103, 204, 0.10)', boxShadow: '0 2px 8px rgba(69, 103, 204, 0.07)' }}>
+      <div style={{ marginTop: '85px', flex: 1, minWidth: '280px', maxWidth: '400px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', padding: '18px', border: '1px solid rgba(69, 103, 204, 0.10)', boxShadow: '0 2px 8px rgba(69, 103, 204, 0.07)' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '10px', color: 'var(--accent)' }}>
           {selectedIndustry ? `Users in ${selectedIndustry}` : 'Select an industry'}
         </h3>

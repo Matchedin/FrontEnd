@@ -51,7 +51,7 @@ export function useClassRecommendations(): UseClassRecommendationsReturn {
   useEffect(() => {
     const loadResumeFromTemp = async () => {
       try {
-        const response = await fetch('/api/get-resume');
+        const response = await fetch('/api/get-resume-text');
         if (!response.ok) {
           throw new Error('Resume file not found in temp folder');
         }
