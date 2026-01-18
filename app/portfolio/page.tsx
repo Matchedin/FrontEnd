@@ -81,7 +81,7 @@ export default function PortfolioPage() {
           <PortfolioHeader userInfo={userInfo} />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px', marginTop: '48px' }}>
-            <ConnectionTypes connectionTypes={connectionTypes} />
+            <ConnectionTypes industryMatches={connectionTypes} />
             <ResumeCharacteristics resumeText={resumeText} />
             <StrengthsAndImprovements connectionData={connectionData} />
           </div>

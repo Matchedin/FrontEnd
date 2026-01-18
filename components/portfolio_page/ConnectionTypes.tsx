@@ -1,18 +1,15 @@
 'use client';
 
-
+import { Profile } from '@/types/profile';
 import React, { useState } from 'react';
 
-interface ConnectionTypesProps {
-  industryMatches: Record<string, number>; // percent match per industry
-}
 
 export default function ConnectionTypes({ industryMatches }: ConnectionTypesProps) {
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
-  const [industryUsers, setIndustryUsers] = useState<any[]>([]);
+  const [industryUsers, setIndustryUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
 
-  if (!industryMatches || Object.keys(industryMatches).length === 0) {
+  if (!industryMatches) {
     return (
       <div style={{
         padding: '24px',
@@ -150,11 +147,11 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
         ) : (
           <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
             {industryUsers.length > 0 ? (
-              industryUsers.map((user: any) => (
-                <div key={user.ProfileId} style={{ marginBottom: '12px', padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.07)' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--foreground)' }}>{user.Name || 'Unnamed'}</div>
-                  <div style={{ fontSize: '0.95rem', color: 'rgba(32,32,32,0.7)' }}>{user.Headline || user.RoleCurrent || ''}</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(32,32,32,0.6)' }}>{user.CurrentCompany || ''}</div>
+              industryUsers.map((user: Profile) => (
+                <div key={user.profileId} style={{ marginBottom: '12px', padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.07)' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--foreground)' }}>{user.name || 'Unnamed'}</div>
+                  <div style={{ fontSize: '0.95rem', color: 'rgba(32,32,32,0.7)' }}>{user.headline || user.roleCurrent || ''}</div>
+                  <div style={{ fontSize: '0.9rem', color: 'rgba(32,32,32,0.6)' }}>{user.currentCompany || ''}</div>
                 </div>
               ))
             ) : (
