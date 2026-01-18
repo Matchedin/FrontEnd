@@ -11,6 +11,25 @@ interface ReviewResult {
   metadata?: Record<string, unknown>;
 }
 
+
+  const capitalizeWords = (str?: string) => {
+    if (!str) return '';
+    // normalize separators, preserve existing ALL-CAPS acronyms
+    return str
+      .replace(/[_\-]+/g, ' ')
+      .split(/\s+/)
+      .map(word => {
+        if (!word) return '';
+        // capture leading/trailing punctuation
+        const leading = (word.match(/^[^A-Za-z0-9]+/) || [''])[0];
+        const trailing = (word.match(/[^A-Za-z0-9]+$/) || [''])[0];
+        const core = word.slice(leading.length, word.length - trailing.length);
+        if (core === core.toUpperCase()) return leading + core + trailing; // keep acronyms
+        return leading + core.charAt(0).toUpperCase() + core.slice(1).toLowerCase() + trailing;
+      })
+      .join(' ');
+  };
+
 export default function ResumeReview() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeName, setResumeName] = useState<string>('');
@@ -333,9 +352,7 @@ export default function ResumeReview() {
             {reviewResult.metadata && Array.isArray(reviewResult.metadata.annotations) && (
               <div style={{
                 marginTop: '20px',
-                animation: 'fadeInUp 0.6s ease-out 0.6s backwards',
-                height: '600px',
-                overflow: 'hidden'
+                animation: 'fadeInUp 0.6s ease-out 0.6s backwards'
               }}>
                 <h3 style={{
                   fontSize: '0.95rem',
@@ -393,7 +410,7 @@ export default function ResumeReview() {
                           fontWeight: '600',
                           color: annotation.color === 'red' ? '#dc2626' : '#d97706'
                         }}>
-                          {annotation.phrase}
+                          {capitalizeWords(annotation.phrase)}
                         </span>
                         <span style={{
                           display: 'block',
