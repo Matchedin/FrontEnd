@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text();
       console.error('Backend error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to generate cold email' },
+        { error: 'Failed to generate introductory email' },
         { status: response.status }
       );
     }

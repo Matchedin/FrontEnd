@@ -201,7 +201,7 @@ export default function ConnectModal({ person, isOpen, onClose, resumeFile }: Co
         {/* Email Generation Section */}
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '12px', color: 'var(--primary)' }}>
-            Cold Email
+            Introductory Email
           </h3>
 
           {error && (
@@ -245,7 +245,7 @@ export default function ConnectModal({ person, isOpen, onClose, resumeFile }: Co
                 (e.currentTarget as HTMLElement).style.boxShadow = 'none';
               }}
             >
-              Generate Cold Email
+              Generate Introductory Email
             </button>
           )}
 
