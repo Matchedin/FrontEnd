@@ -27,9 +27,26 @@ interface NodePosition {
   distance: number;
 }
 
+interface PersonData {
+  name: string;
+  email: string;
+  location: string;
+  headline: string;
+  about: string;
+  current_role: string;
+  current_company: string;
+  can_offer: string[];
+  industry: string;
+  skills: string[];
+  needs: string[];
+  rank?: number;
+}
+
 interface ConnectionsProps {
   selectedPersonName: string | null;
   onSelectPerson: (name: string) => void;
+  connectionsData?: string | null;
+  onConnect?: (personName: string) => void;
 }
 
 // Deterministic pseudo-random function based on seed
@@ -38,7 +55,7 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-export default function Connections({ selectedPersonName, onSelectPerson }: ConnectionsProps) {
+export default function Connections({ selectedPersonName, onSelectPerson, connectionsData, onConnect }: ConnectionsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -50,7 +67,24 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
   const [extraAnimationState, setExtraAnimationState] = useState<'idle' | 'entering' | 'exiting'>('idle');
   
   // Use the full list (up to 50) for position calculations but control rendering
-  const allConnections = useMemo(() => mockPersonsData.slice(0, 50), []);
+  const allConnections = useMemo(() => {
+    if (connectionsData) {
+      try {
+        // Parse the JSON string from the API response
+        const parsedData = JSON.parse(connectionsData) as PersonData[];
+        // Ensure rank is always set (use index + 1 as fallback)
+        return parsedData.slice(0, 50).map((person, index) => ({
+          ...person,
+          rank: person.rank ?? index + 1
+        }));
+      } catch (error) {
+        console.error('Failed to parse connections data:', error);
+        return mockPersonsData.slice(0, 50);
+      }
+    }
+    // Fallback to mock data if no connectionsData provided
+    return mockPersonsData.slice(0, 50);
+  }, [connectionsData]);
   
   // Find selected node based on person name
   const selectedNode = selectedPersonName ? allConnections.find(p => p.name === selectedPersonName) : null;
@@ -786,7 +820,7 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
                     View Profile
                   </button>
                   <button
-                    onClick={() => alert(`Connecting with ${person.name}`)}
+                    onClick={() => onConnect?.(person.name)}
                     style={{
                       flex: 1,
                       padding: '10px',

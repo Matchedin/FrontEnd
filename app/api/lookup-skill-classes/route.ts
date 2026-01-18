@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface SkillClassInput {
+  university: string;
+  skills: string[];
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const profileJson = body.profileJson as string | null;
-    const resumeText = body.resumeText as string | null;
+    const body = await request.json() as SkillClassInput;
+    const { university, skills } = body;
 
-    if (!profileJson || !resumeText) {
+    if (!university || !skills || skills.length === 0) {
       return NextResponse.json(
-        { error: 'ProfileJson and resumeText are required' },
+        { error: 'University and skills array are required' },
         { status: 400 }
       );
     }
 
-    const apiUrl = process.env.SSE_BASE_URL + '/gemini/coldEmail';
+    const apiUrl = process.env.SSE_BASE_URL + '/classes/lookupSkillClasses';
     console.log('Calling API:', apiUrl);
-    console.log('Profile:', profileJson);
-    console.log('Resume text length:', resumeText.length, 'characters');
+    console.log('University:', university);
+    console.log('Skills:', skills);
 
     const payload = {
-      profileJson,
-      resumeText
+      university,
+      skills
     };
 
     const response = await fetch(apiUrl, {
@@ -35,20 +39,20 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text();
       console.error('Backend error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to generate cold email' },
+        { error: 'Failed to lookup skill classes' },
         { status: response.status }
       );
     }
 
-    const emailText = await response.text();
-    return new NextResponse(emailText, {
+    const classesJson = await response.text();
+    return new NextResponse(classesJson, {
       headers: {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'application/json',
       },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Gemini API error:', errorMessage);
+    console.error('Lookup classes error:', errorMessage);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

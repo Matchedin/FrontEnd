@@ -3,13 +3,46 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { mockPersonsData } from '../../data/connectionsData';
 
+interface PersonData {
+  name: string;
+  email: string;
+  location: string;
+  headline: string;
+  about: string;
+  current_role: string;
+  current_company: string;
+  can_offer: string[];
+  industry: string;
+  skills: string[];
+  needs: string[];
+  rank?: number;
+}
+
 interface PersonCardProps {
   selectedPersonName: string | null;
   onSelectPerson: (name: string) => void;
+  connectionsData?: string | null;
 }
 
-export default function PersonCard({ selectedPersonName, onSelectPerson }: PersonCardProps) {
-  const people = useMemo(() => mockPersonsData.slice(0, 50), []);
+export default function PersonCard({ selectedPersonName, onSelectPerson, connectionsData }: PersonCardProps) {
+  const people = useMemo(() => {
+    if (connectionsData) {
+      try {
+        // Parse the JSON string from the API response
+        const parsedData = JSON.parse(connectionsData) as PersonData[];
+        // Ensure rank is always set (use index + 1 as fallback)
+        return parsedData.slice(0, 50).map((person, index) => ({
+          ...person,
+          rank: person.rank ?? index + 1
+        }));
+      } catch (error) {
+        console.error('Failed to parse connections data:', error);
+        return mockPersonsData.slice(0, 50);
+      }
+    }
+    // Fallback to mock data if no connectionsData provided
+    return mockPersonsData.slice(0, 50);
+  }, [connectionsData]);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedCardRef = useRef<HTMLDivElement>(null);
   

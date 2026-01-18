@@ -4,13 +4,18 @@ import React, { useState } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 
-export default function InfoForm() {
+interface InfoFormProps {
+  onConnectionsDataReady?: (data: string, resumeFile?: File) => void;
+}
+
+export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     school: '',
     resume: null as File | null
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -22,41 +27,67 @@ export default function InfoForm() {
           ...prev,
           resume: file
         }));
+        setError('');
       } else {
-        alert('Please upload a valid DOCX file');
+        setError('Please upload a valid DOCX file');
       }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (!formData.name.trim()) {
-      alert('Please enter your name');
+      setError('Please enter your name');
       return;
     }
     
     if (!formData.school.trim()) {
-      alert('Please enter your school');
+      setError('Please enter your school');
       return;
     }
     
     if (!formData.resume) {
-      alert('Please upload your resume');
+      setError('Please upload your resume');
       return;
     }
 
     setIsLoading(true);
     
-    // TODO: Send to backend for processing
-    console.log('Form submitted:', formData);
-    
-    // Simulate processing
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('name', formData.name);
+      uploadFormData.append('school', formData.school);
+      uploadFormData.append('resume', formData.resume);
+
+      const response = await fetch('/api/connection_fetching', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process resume');
+      }
+
+      const result = await response.json();
+      
+      // Call callback with the connections data and resume file if provided
+      if (onConnectionsDataReady && result.data) {
+        onConnectionsDataReady(result.data, formData.resume || undefined);
+      }
+
+      setError('');
       alert('Resume uploaded successfully!');
       setFormData({ name: '', school: '', resume: null });
-    }, 2000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload';
+      setError(errorMessage);
+      console.error('Upload error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,6 +107,19 @@ export default function InfoForm() {
         <p style={{ fontSize: '1rem', color: 'rgba(32, 32, 32, 0.7)' }}>
           Upload your resume and we will build your network profile
         </p>
+        {error && (
+          <div style={{ 
+            marginTop: '12px', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#dc2626',
+            fontSize: '0.875rem'
+          }}>
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Name Input */}
