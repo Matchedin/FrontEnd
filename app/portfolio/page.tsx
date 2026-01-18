@@ -18,6 +18,7 @@ export default function PortfolioPage() {
   const [userInfo, setUserInfo] = useState<{ name: string; school: string } | null>(null);
   const [hasData, setHasData] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [activeTab, setActiveTab] = useState<'network' | 'insights'>('network');
 
   // Check for user data on client-side mount
   useEffect(() => {
