@@ -21,6 +21,7 @@ export default function Header() {
     { href: '#connect', label: 'Connect' },
     { href: '/network', label: 'Network' },
     { href: '/info', label: 'Info' },
+    { href: '/academics', label: 'Academics' },
   ];
 
   return (

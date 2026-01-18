@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { mockPersonsData } from '../../data/connectionsData';
 
 const mockCurrentUser = {
@@ -27,9 +27,26 @@ interface NodePosition {
   distance: number;
 }
 
+interface PersonData {
+  name: string;
+  email: string;
+  location: string;
+  headline: string;
+  about: string;
+  current_role: string;
+  current_company: string;
+  can_offer: string | string[];
+  industry: string;
+  skills: string | string[];
+  needs: string | string[];
+  rank: number;
+}
+
 interface ConnectionsProps {
   selectedPersonName: string | null;
   onSelectPerson: (name: string) => void;
+  connectionsData?: string | null;
+  onConnect?: (personName: string) => void;
 }
 
 // Deterministic pseudo-random function based on seed
@@ -38,19 +55,79 @@ const seededRandom = (seed: number): number => {
   return x - Math.floor(x);
 };
 
-export default function Connections({ selectedPersonName, onSelectPerson }: ConnectionsProps) {
+export default function Connections({ selectedPersonName, onSelectPerson, connectionsData, onConnect }: ConnectionsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedPersonForProfile, setSelectedPersonForProfile] = useState<PersonData | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
   // separate progress values so we don't restart the entire animation on expand/collapse
   const [initialAnimationProgress, setInitialAnimationProgress] = useState(0); // for ranks 1-25
   const [extraAnimationProgress, setExtraAnimationProgress] = useState(0); // for ranks 26-50
   const [extraAnimationState, setExtraAnimationState] = useState<'idle' | 'entering' | 'exiting'>('idle');
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsHydrated(true);
+  }, []);
   
   // Use the full list (up to 50) for position calculations but control rendering
-  const allConnections = useMemo(() => mockPersonsData.slice(0, 50), []);
+  const allConnections = useMemo(() => {
+    // On server render, always use mock data to ensure hydration match
+    if (!isHydrated) {
+      return mockPersonsData.slice(0, 50);
+    }
+
+    if (connectionsData) {
+      try {
+        // Parse the JSON string from the API response
+        const parsedData = JSON.parse(connectionsData) as Array<{
+          rank?: number;
+          skills?: string | string[];
+          can_offer?: string | string[];
+          needs?: string | string[];
+          [key: string]: unknown;
+        }>;
+        // Ensure rank is always set (use index + 1 as fallback)
+        // Also parse string arrays if they're stored as strings
+        return parsedData.slice(0, 50).map((person, index): PersonData => {
+          const parseArray = (value: string | string[] | undefined): string[] => {
+            if (typeof value === 'string') {
+              try {
+                return JSON.parse(value.replace(/'/g, '"'));
+              } catch {
+                return [value];
+              }
+            }
+            return Array.isArray(value) ? value : [];
+          };
+
+          return {
+            name: String(person.name || ''),
+            email: String(person.email || ''),
+            location: String(person.location || ''),
+            headline: String(person.headline || ''),
+            about: String(person.about || ''),
+            current_role: String(person.current_role || ''),
+            current_company: String(person.current_company || ''),
+            industry: String(person.industry || ''),
+            rank: (person.rank as number) ?? index + 1,
+            skills: parseArray(person.skills),
+            can_offer: parseArray(person.can_offer),
+            needs: parseArray(person.needs)
+          };
+        });
+      } catch (error) {
+        console.error('Failed to parse connections data:', error);
+        return mockPersonsData.slice(0, 50);
+      }
+    }
+    // Fallback to mock data if no connectionsData provided
+    return mockPersonsData.slice(0, 50);
+  }, [connectionsData, isHydrated]);
   
   // Find selected node based on person name
   const selectedNode = selectedPersonName ? allConnections.find(p => p.name === selectedPersonName) : null;
@@ -677,7 +754,7 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
           </div>
 
           {(() => {
-            const person = selectedNode ? mockPersonsData.find(p => p.name === selectedNode.name) : null;
+            const person = selectedNode ? allConnections.find(p => p.name === selectedNode.name) : null;
             return person ? (
               <>
                 <div style={{ marginTop: '10px', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(69, 103, 204, 0.06)' }}>
@@ -718,19 +795,24 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
                       Can Offer
                     </h3>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      {person.can_offer.map((skill, i) => (
-                        <span key={i} style={{
-                          fontSize: '0.75rem',
-                          background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(69, 103, 204, 0.05) 100%)',
-                          border: '1px solid rgba(69, 103, 204, 0.3)',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          color: 'var(--primary)',
-                          fontWeight: '500'
-                        }}>
-                          {skill}
-                        </span>
-                      ))}
+                      {Array.isArray(person.can_offer) && person.can_offer.map((skill: string, i: number) => {
+                        const capitalizeWords = (str: string) => {
+                          return str.replace(/\b\w/g, (char) => char.toUpperCase());
+                        };
+                        return (
+                          <span key={i} style={{
+                            fontSize: '0.75rem',
+                            background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(69, 103, 204, 0.05) 100%)',
+                            border: '1px solid rgba(69, 103, 204, 0.3)',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            color: 'var(--primary)',
+                            fontWeight: '500'
+                          }}>
+                            {capitalizeWords(skill)}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -741,26 +823,34 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
                       Looking For
                     </h3>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      {person.needs.map((need, i) => (
-                        <span key={i} style={{
-                          fontSize: '0.75rem',
-                          background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(196, 65, 185, 0.05) 100%)',
-                          border: '1px solid rgba(196, 65, 185, 0.3)',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          color: 'var(--accent)',
-                          fontWeight: '500'
-                        }}>
-                          {need}
-                        </span>
-                      ))}
+                      {Array.isArray(person.needs) && person.needs.map((need: string, i: number) => {
+                        const capitalizeWords = (str: string) => {
+                          return str.replace(/\b\w/g, (char) => char.toUpperCase());
+                        };
+                        return (
+                          <span key={i} style={{
+                            fontSize: '0.75rem',
+                            background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(196, 65, 185, 0.05) 100%)',
+                            border: '1px solid rgba(196, 65, 185, 0.3)',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            color: 'var(--accent)',
+                            fontWeight: '500'
+                          }}>
+                            {capitalizeWords(need)}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
                 <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
                   <button
-                    onClick={() => alert(`Viewing ${person.name}'s profile`)}
+                    onClick={() => {
+                      setSelectedPersonForProfile(person);
+                      setIsProfileModalOpen(true);
+                    }}
                     style={{
                       flex: 1,
                       padding: '10px',
@@ -786,7 +876,7 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
                     View Profile
                   </button>
                   <button
-                    onClick={() => alert(`Connecting with ${person.name}`)}
+                    onClick={() => onConnect?.(person.name)}
                     style={{
                       flex: 1,
                       padding: '10px',
@@ -819,6 +909,208 @@ export default function Connections({ selectedPersonName, onSelectPerson }: Conn
           })()}
         </div>
       </div>
+
+      {/* Profile Modal */}
+      {isProfileModalOpen && selectedPersonForProfile && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setIsProfileModalOpen(false)}
+        >
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              padding: '32px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              border: '1px solid rgba(69, 103, 204, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: '0 0 8px 0', color: 'var(--foreground)' }}>
+                  {selectedPersonForProfile.name}
+                </h2>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(32, 32, 32, 0.7)', margin: 0 }}>
+                  Rank #{selectedPersonForProfile.rank}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsProfileModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: '0',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Main Info */}
+            <div
+              style={{
+                background: 'rgba(69, 103, 204, 0.05)',
+                border: '1px solid rgba(69, 103, 204, 0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '24px'
+              }}
+            >
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
+                <strong>Title:</strong> {selectedPersonForProfile.current_role}
+              </p>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
+                <strong>Company:</strong> {selectedPersonForProfile.current_company}
+              </p>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
+                <strong>Headline:</strong> {selectedPersonForProfile.headline}
+              </p>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
+                <strong>Email:</strong> {selectedPersonForProfile.email}
+              </p>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
+                <strong>Location:</strong> {selectedPersonForProfile.location}
+              </p>
+              <p style={{ margin: '0', fontSize: '0.875rem', color: 'rgba(32, 32, 32, 0.6)' }}>
+                <strong>Industry:</strong> {selectedPersonForProfile.industry}
+              </p>
+            </div>
+
+            {/* About */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '12px', color: 'var(--primary)' }}>
+                About
+              </h3>
+              <p style={{ fontSize: '0.95rem', lineHeight: '1.6', color: 'rgba(32, 32, 32, 0.8)', margin: 0 }}>
+                {selectedPersonForProfile.about}
+              </p>
+            </div>
+
+            {/* Skills */}
+            {selectedPersonForProfile.skills && selectedPersonForProfile.skills.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '12px', color: 'var(--primary)' }}>
+                  Skills
+                </h3>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {Array.isArray(selectedPersonForProfile.skills) && selectedPersonForProfile.skills.map((skill: string, i: number) => (
+                    <span key={i} style={{
+                      fontSize: '0.85rem',
+                      background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(69, 103, 204, 0.05) 100%)',
+                      border: '1px solid rgba(69, 103, 204, 0.3)',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      color: 'var(--primary)',
+                      fontWeight: '500'
+                    }}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Can Offer */}
+            {selectedPersonForProfile.can_offer && selectedPersonForProfile.can_offer.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '12px', color: 'var(--primary)' }}>
+                  Can Offer
+                </h3>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {Array.isArray(selectedPersonForProfile.can_offer) && selectedPersonForProfile.can_offer.map((offer: string, i: number) => (
+                    <span key={i} style={{
+                      fontSize: '0.85rem',
+                      background: 'linear-gradient(135deg, rgba(69, 103, 204, 0.1) 0%, rgba(69, 103, 204, 0.05) 100%)',
+                      border: '1px solid rgba(69, 103, 204, 0.3)',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      color: 'var(--primary)',
+                      fontWeight: '500'
+                    }}>
+                      {offer}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Needs / Looking For */}
+            {selectedPersonForProfile.needs && selectedPersonForProfile.needs.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '12px', color: 'var(--accent)' }}>
+                  Looking For
+                </h3>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {Array.isArray(selectedPersonForProfile.needs) && selectedPersonForProfile.needs.map((need: string, i: number) => (
+                    <span key={i} style={{
+                      fontSize: '0.85rem',
+                      background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(196, 65, 185, 0.05) 100%)',
+                      border: '1px solid rgba(196, 65, 185, 0.3)',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      color: 'var(--accent)',
+                      fontWeight: '500'
+                    }}>
+                      {need}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Close Button */}
+            <button
+              onClick={() => setIsProfileModalOpen(false)}
+              style={{
+                background: 'rgba(69, 103, 204, 0.1)',
+                color: 'var(--primary)',
+                border: '1px solid rgba(69, 103, 204, 0.2)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(69, 103, 204, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(69, 103, 204, 0.1)';
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

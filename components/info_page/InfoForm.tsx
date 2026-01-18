@@ -4,13 +4,18 @@ import React, { useState } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 
-export default function InfoForm() {
+interface InfoFormProps {
+  onConnectionsDataReady?: (data: string, resumeFile?: File) => void;
+}
+
+export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     school: '',
     resume: null as File | null
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -22,41 +27,119 @@ export default function InfoForm() {
           ...prev,
           resume: file
         }));
+        setError('');
       } else {
-        alert('Please upload a valid DOCX file');
+        setError('Please upload a valid DOCX file');
       }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (!formData.name.trim()) {
-      alert('Please enter your name');
+      setError('Please enter your name');
       return;
     }
     
     if (!formData.school.trim()) {
-      alert('Please enter your school');
+      setError('Please enter your school');
       return;
     }
     
     if (!formData.resume) {
-      alert('Please upload your resume');
+      setError('Please upload your resume');
       return;
     }
 
     setIsLoading(true);
     
-    // TODO: Send to backend for processing
-    console.log('Form submitted:', formData);
-    
-    // Simulate processing
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Step 1: Clear temp folder
+      console.log('Clearing temp folder...');
+      await fetch('/api/temp-management?action=clear', {
+        method: 'POST',
+      });
+
+      // Step 2: Upload resume and get matches
+      console.log('Uploading resume and fetching matches...');
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', formData.resume);
+
+      const response = await fetch('/api/connection_fetching', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process resume');
+      }
+
+      const result = await response.json();
+      
+      // Step 3: Save uploaded resume file to temp
+      console.log('Saving resume file to temp...');
+      const resumeFormData = new FormData();
+      resumeFormData.append('file', formData.resume);
+      resumeFormData.append('filename', formData.resume.name);
+      
+      await fetch('/api/temp-management?action=save-file', {
+        method: 'POST',
+        body: resumeFormData,
+      });
+
+      // Step 4: Save matches JSON to temp
+      console.log('Saving matches to temp...');
+      await fetch('/api/temp-management?action=save-json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: result,
+          filename: 'matches.json'
+        }),
+      });
+
+      // Step 5: Flatten the API response if it has nested structure
+      let flattenedData: Array<Record<string, unknown>> = [];
+      if (result.top_25_people && result.last_50_people) {
+        // API returned nested structure - flatten it
+        flattenedData = [...(result.top_25_people as Array<Record<string, unknown>>), ...(result.last_50_people as Array<Record<string, unknown>>)];
+      } else if (Array.isArray(result)) {
+        // API returned flat array
+        flattenedData = result as Array<Record<string, unknown>>;
+      } else {
+        // Fallback - try to extract as array
+        flattenedData = Object.values(result).flat() as Array<Record<string, unknown>>;
+      }
+
+      // Step 6: Store in sessionStorage and redirect
+      console.log('Storing connections data and redirecting...');
+      sessionStorage.setItem('connectionsData', JSON.stringify(flattenedData));
+      sessionStorage.setItem('userInfo', JSON.stringify({
+        name: formData.name,
+        school: formData.school
+      }));
+
+      setError('');
       alert('Resume uploaded successfully!');
+      
+      // Redirect to network page
+      if (onConnectionsDataReady) {
+        onConnectionsDataReady(JSON.stringify(flattenedData), formData.resume || undefined);
+      }
+      
       setFormData({ name: '', school: '', resume: null });
-    }, 2000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload';
+      setError(errorMessage);
+      console.error('Upload error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,6 +159,19 @@ export default function InfoForm() {
         <p style={{ fontSize: '1rem', color: 'rgba(32, 32, 32, 0.7)' }}>
           Upload your resume and we will build your network profile
         </p>
+        {error && (
+          <div style={{ 
+            marginTop: '12px', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#dc2626',
+            fontSize: '0.875rem'
+          }}>
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Name Input */}
