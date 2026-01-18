@@ -80,7 +80,8 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '16px'
+          gap: '16px',
+          overflowY: 'hidden',
         }}>
           {sortedIndustries.length > 0 ? (
             sortedIndustries.map(([industry, percent], i) => (
@@ -147,18 +148,80 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
             {industryUsers.length > 0 ? (
               industryUsers.map((user: Profile) => (
-                <div key={user.profileId} style={{ marginBottom: '12px', padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.07)' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--foreground)' }}>{user.name || 'Unnamed'}</div>
-                  <div style={{ fontSize: '0.95rem', color: 'rgba(32,32,32,0.7)' }}>{user.headline || user.roleCurrent || ''}</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(32,32,32,0.6)' }}>{user.currentCompany || ''}</div>
+                <div
+                  key={user.profileId}
+                  style={{
+                    marginBottom: '16px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(139, 92, 246, 0.15)',
+                    boxShadow: '0 2px 8px rgba(139, 92, 246, 0.08)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.15)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.08)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139, 92, 246, 0.15)';
+                  }}
+                >
+                  <div style={{
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    color: 'var(--foreground)',
+                    marginBottom: '6px',
+                    background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>
+                    {user.name || 'Unnamed User'}
+                  </div>
+                  <div style={{
+                    fontSize: '0.95rem',
+                    color: 'rgba(32, 32, 32, 0.8)',
+                    marginBottom: '4px',
+                    fontWeight: '500',
+                    lineHeight: '1.4'
+                  }}>
+                    {user.headline || user.roleCurrent || 'Professional'}
+                  </div>
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: 'rgba(32, 32, 32, 0.6)',
+                    fontWeight: '400'
+                  }}>
+                    {user.currentCompany ? `🏢 ${user.currentCompany}` : 'Company not specified'}
+                  </div>
+                  {user.location && (
+                    <div style={{
+                      fontSize: '0.8rem',
+                      color: 'rgba(32, 32, 32, 0.5)',
+                      marginTop: '4px'
+                    }}>
+                      📍 {user.location}
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
-              <div style={{ color: 'rgba(32,32,32,0.6)' }}>
-                {selectedIndustry ? 'No users found in this industry.' : 'No industry selected.'}
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: 'rgba(32, 32, 32, 0.6)',
+                fontSize: '1rem'
+              }}>
+                {selectedIndustry ? 'No users found in this industry.' : 'Select an industry to view users.'}
               </div>
             )}
           </div>
