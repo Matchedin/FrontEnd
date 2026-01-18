@@ -21,7 +21,7 @@ export default function ClassesPanel({ classes, isLoading }: ClassesPanelProps) 
         alignItems: 'center',
         gap: '8px'
       }}>
-        ✨ Recommended Classes
+        Recommended Classes
       </div>
 
       {isLoading ? (
@@ -54,7 +54,7 @@ export default function ClassesPanel({ classes, isLoading }: ClassesPanelProps) 
           msOverflowStyle: 'none'
         }}
         className="hide-scrollbar">
-          {classes.map((classItem, i) => (
+          {classes.slice(1).map((classItem, i) => (
             <div
               key={i}
               style={{

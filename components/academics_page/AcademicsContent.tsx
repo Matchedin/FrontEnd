@@ -6,11 +6,6 @@ import PDFViewer from './PDFViewer';
 import ClassesPanel from './ClassesPanel';
 import { useClassRecommendations } from '@/hooks/useClassRecommendations';
 
-interface ClassRecommendation {
-  className: string;
-  description: string;
-}
-
 export default function AcademicsContent() {
   const [activeTab, setActiveTab] = useState<'resume' | 'classes'>('resume');
   const [pdfPath, setPdfPath] = useState<string>('');
@@ -131,7 +126,10 @@ export default function AcademicsContent() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-                margin: '0 0 8px 0'
+                margin: '0 0 8px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
               }}>
                 Classes for Your Skills
               </h2>
@@ -147,26 +145,79 @@ export default function AcademicsContent() {
               
               {classRecommendations.isLoading && (
                 <div style={{
+                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  padding: '48px 32px',
+                  border: '1px solid rgba(196, 65, 185, 0.2)',
                   textAlign: 'center',
-                  padding: '40px',
-                  color: 'rgba(32, 32, 32, 0.6)'
+                  marginBottom: '24px'
                 }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⏳</div>
-                  <p style={{ margin: 0 }}>Loading classes...</p>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px', animation: 'pulse 2s ease-in-out infinite' }}>🔍</div>
+                  <p style={{ margin: '0', fontSize: '1.1rem', color: 'rgba(32, 32, 32, 0.7)', fontWeight: '500' }}>Searching for the best classes for you...</p>
+                </div>
+              )}
+              
+              {!classRecommendations.isLoading && classRecommendations.recommendations.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  padding: '32px',
+                  border: '2px solid rgba(196, 65, 185, 0.4)',
+                  boxShadow: '0 8px 32px rgba(196, 65, 185, 0.15)',
+                  marginBottom: '24px',
+                  animation: 'slideUp 0.6s ease-out'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                    <div style={{ 
+                      fontSize: '2.5rem',
+                      filter: 'brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1200%) hue-rotate(250deg)'
+                    }}>
+                      🎓
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{
+                        fontSize: '1.3rem',
+                        fontWeight: '700',
+                        margin: '0 0 8px 0',
+                        color: 'var(--accent)',
+                      }}>
+                        Top Recommendation
+                      </h3>
+                      <h4 style={{
+                        fontSize: '1.1rem',
+                        fontWeight: '600',
+                        margin: '0 0 12px 0',
+                        color: 'var(--foreground)',
+                      }}>
+                        {classRecommendations.recommendations[0]?.className}
+                      </h4>
+                      <p style={{
+                        fontSize: '0.95rem',
+                        color: 'rgba(32, 32, 32, 0.7)',
+                        lineHeight: '1.6',
+                        margin: 0
+                      }}>
+                        {classRecommendations.recommendations[0]?.description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
               
               {!classRecommendations.isLoading && classRecommendations.recommendations.length === 0 && (
                 <div style={{
+                  background: 'linear-gradient(135deg, rgba(196, 65, 185, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  padding: '48px 32px',
+                  border: '1px dashed rgba(196, 65, 185, 0.3)',
                   textAlign: 'center',
-                  padding: '40px',
-                  background: 'rgba(255, 255, 255, 0.5)',
-                  borderRadius: '12px',
-                  border: '1px dashed rgba(196, 65, 185, 0.2)',
-                  color: 'rgba(32, 32, 32, 0.6)'
+                  marginBottom: '24px'
                 }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📚</div>
-                  <p style={{ margin: 0 }}>No classes found. Please ensure you have uploaded your resume.</p>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📚</div>
+                  <p style={{ margin: '0', fontSize: '1rem', color: 'rgba(32, 32, 32, 0.6)' }}>No classes found. Please ensure you have uploaded your resume.</p>
                 </div>
               )}
               

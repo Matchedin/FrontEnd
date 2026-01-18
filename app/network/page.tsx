@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
+import { motion } from 'framer-motion';
 import StaticHeader from "../../components/layout/StaticHeader"
 import PersonCard from "../../components/network_page/PersonCard";
 import Connections from "../../components/network_page/Connections";
@@ -25,7 +26,17 @@ interface PersonData {
 
 export default function NetworkPage() {
   const [selectedPersonName, setSelectedPersonName] = useState<string | null>(null);
-  const [hasData, setHasData] = useState(true);
+  const [hasData, setHasData] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+  
+  useEffect(() => {
+    const userInfoStr = sessionStorage.getItem('userInfo');
+    const hasUserInfo = !!userInfoStr;
+    console.log('Network checking - userInfo exists:', hasUserInfo);
+    setHasData(hasUserInfo);
+    setIsChecked(true);
+  }, []);
+  
   const [connectionsData] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const storedData = sessionStorage.getItem('connectionsData');
@@ -117,15 +128,24 @@ export default function NetworkPage() {
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--background)' }}>
+    <motion.div 
+      className="w-full h-screen overflow-hidden flex flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      style={{ backgroundColor: 'var(--background)' }}>
       <StaticHeader />
-      <div 
-        className="flex flex-1 overflow-hidden" 
+      <motion.div 
+        className="flex flex-1 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
         style={{
           background: 'linear-gradient(135deg, #F5F5F5 0%, #E8E8F0 100%)',
           position: 'relative',
-          filter: !hasData ? 'blur(4px)' : 'none',
-          pointerEvents: !hasData ? 'none' : 'auto',
+          filter: isChecked && !hasData ? 'blur(4px)' : 'none',
+          pointerEvents: isChecked && !hasData ? 'none' : 'auto',
           transition: 'filter 0.3s ease'
         }}
       >
@@ -161,7 +181,7 @@ export default function NetworkPage() {
           <PersonCard selectedPersonName={selectedPersonName} onSelectPerson={setSelectedPersonName} connectionsData={connectionsData} />
           <Connections selectedPersonName={selectedPersonName} onSelectPerson={setSelectedPersonName} connectionsData={connectionsData} onConnect={handleConnectClick} />
         </div>
-      </div>
+      </motion.div>
 
       {/* Connect Modal */}
       <ConnectModal
@@ -174,7 +194,7 @@ export default function NetworkPage() {
         resumeFile={resumeFile}
       />
 
-      <NoDataModal isOpen={!hasData} />
-    </div>
+      <NoDataModal isOpen={isChecked && !hasData} />
+    </motion.div>
   );
 }

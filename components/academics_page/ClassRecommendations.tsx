@@ -314,7 +314,7 @@ export default function ClassRecommendations({ onClassesChange, onSearchingChang
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            ✨ Recommended Classes
+            Recommended Classes
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
             {recommendations.map((classItem, i) => (

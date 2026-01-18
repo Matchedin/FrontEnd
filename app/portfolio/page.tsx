@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import StaticHeader from '../../components/layout/StaticHeader';
 import PortfolioBackground from '../../components/portfolio_page/PortfolioBackground';
 import PortfolioHeader from '../../components/portfolio_page/PortfolioHeader';
@@ -16,7 +17,17 @@ export default function PortfolioPage() {
   const [connectionData, setConnectionData] = useState<ConnectionData[]>([]);
   const [resumeText, setResumeText] = useState('');
   const [userInfo, setUserInfo] = useState<{ name: string; school: string } | null>(null);
-  const [hasData, setHasData] = useState(true);
+  const [hasData, setHasData] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+
+  // Check for user data on client-side mount
+  useEffect(() => {
+    const userInfoStr = sessionStorage.getItem('userInfo');
+    const hasUserInfo = !!userInfoStr;
+    console.log('Portfolio checking - userInfo exists:', hasUserInfo);
+    setHasData(hasUserInfo);
+    setIsChecked(true);
+  }, []);
 
   // Load session storage data
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -43,12 +54,13 @@ export default function PortfolioPage() {
 
     // Check if there's meaningful data
     const hasUserInfo = !!info;
-    const hasConnections = connections.length > 0;
+    
+    console.log('Portfolio data loaded - hasUserInfo:', hasUserInfo);
     
     setUserInfo(info);
     setConnectionData(connections);
     setConnectionTypes(typeCounts);
-    setHasData(hasUserInfo && hasConnections);
+    setHasData(hasUserInfo);
   }, []);
 
   // Load resume text
@@ -69,22 +81,33 @@ export default function PortfolioPage() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen" style={{
-      backgroundColor: 'var(--background)',
-      background: 'linear-gradient(to bottom, var(--background) 0%, rgba(245, 245, 245, 0.5) 100%)'
-    }}>
+    <motion.div 
+      className="w-full min-h-screen"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      style={{
+        backgroundColor: 'var(--background)',
+        background: 'linear-gradient(to bottom, var(--background) 0%, rgba(245, 245, 245, 0.5) 100%)'
+      }}>
       <StaticHeader />
 
-      <div className="w-full" style={{
-        background: 'linear-gradient(135deg, #F5F5F5 0%, #E8E8F0 100%)',
-        minHeight: 'calc(100vh - 80px)',
-        position: 'relative',
-        paddingTop: '60px',
-        paddingBottom: '100px',
-        filter: !hasData ? 'blur(4px)' : 'none',
-        pointerEvents: !hasData ? 'none' : 'auto',
-        transition: 'filter 0.3s ease'
-      }}>
+      <motion.div 
+        className="w-full"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        style={{
+          background: 'linear-gradient(135deg, #F5F5F5 0%, #E8E8F0 100%)',
+          minHeight: 'calc(100vh - 80px)',
+          position: 'relative',
+          paddingTop: '60px',
+          paddingBottom: '100px',
+          filter: isChecked && !hasData ? 'blur(4px)' : 'none',
+          pointerEvents: isChecked && !hasData ? 'none' : 'auto',
+          transition: 'filter 0.3s ease'
+        }}>
         <PortfolioBackground />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
@@ -96,7 +119,7 @@ export default function PortfolioPage() {
             <StrengthsAndImprovements connectionData={connectionData} />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <style>{`
         @keyframes float {
@@ -127,9 +150,9 @@ export default function PortfolioPage() {
         }
       `}</style>
 
-      <NoDataModal isOpen={!hasData} />
+      <NoDataModal isOpen={isChecked && !hasData} />
 
       <Footer />
-    </div>
+    </motion.div>
   );
 }

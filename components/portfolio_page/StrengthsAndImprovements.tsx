@@ -105,7 +105,7 @@ export default function StrengthsAndImprovements({ connectionData }: StrengthsAn
             alignItems: 'center',
             gap: '8px'
           }}>
-            ✨ Strengths
+            Strengths
           </h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {strengths.map((strength, i) => (

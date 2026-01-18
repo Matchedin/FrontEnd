@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+export async function GET(request: NextRequest) {
+  try {
+    const action = request.nextUrl.searchParams.get('action');
+    const filename = request.nextUrl.searchParams.get('filename');
+    const tempDir = path.join(process.cwd(), 'temp');
+
+    if (action === 'get-json' && filename) {
+      // Read JSON file from temp folder
+      try {
+        const filePath = path.join(tempDir, filename);
+        const data = await fs.readFile(filePath, 'utf-8');
+        const jsonData = JSON.parse(data);
+        return NextResponse.json(jsonData);
+      } catch (err) {
+        console.error('Error reading temp file:', err);
+        return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      }
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Temp management GET error:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const action = request.nextUrl.searchParams.get('action');
