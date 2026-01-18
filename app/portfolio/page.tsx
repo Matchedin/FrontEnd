@@ -6,8 +6,7 @@ import StaticHeader from '../../components/layout/StaticHeader';
 import PortfolioBackground from '../../components/portfolio_page/PortfolioBackground';
 import PortfolioHeader from '../../components/portfolio_page/PortfolioHeader';
 import ConnectionTypes from '../../components/portfolio_page/ConnectionTypes';
-import ResumeCharacteristics from '../../components/portfolio_page/ResumeCharacteristics';
-import StrengthsAndImprovements from '../../components/portfolio_page/StrengthsAndImprovements';
+import ResumeInsights from '../../components/portfolio_page/ResumeInsights';
 import Footer from '../../components/layout/Footer';
 import NoDataModal from '../../components/common/NoDataModal';
 import { ConnectionData } from '@/data/connectionData';
@@ -113,10 +112,71 @@ export default function PortfolioPage() {
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           <PortfolioHeader userInfo={userInfo} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px', marginTop: '48px' }}>
-            <ConnectionTypes connectionTypes={connectionTypes} />
-            <ResumeCharacteristics resumeText={resumeText} />
-            <StrengthsAndImprovements connectionData={connectionData} />
+          {/* Tab Navigation */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '48px',
+            marginBottom: '32px'
+          }}>
+            <div style={{
+              display: 'flex',
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              padding: '4px',
+              border: '1px solid rgba(69, 103, 204, 0.2)',
+              boxShadow: '0 4px 16px rgba(69, 103, 204, 0.1)'
+            }}>
+              <button
+                onClick={() => setActiveTab('network')}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeTab === 'network' ? 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)' : 'transparent',
+                  color: activeTab === 'network' ? '#ffffff' : 'var(--foreground)',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                🌐 Network
+              </button>
+              <button
+                onClick={() => setActiveTab('insights')}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeTab === 'insights' ? 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)' : 'transparent',
+                  color: activeTab === 'insights' ? '#ffffff' : 'var(--foreground)',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                📊 Insights
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div style={{ marginTop: '24px' }}>
+            {activeTab === 'network' && (
+              <ConnectionTypes industryMatches={connectionTypes} />
+            )}
+            {activeTab === 'insights' && (
+              <ResumeInsights resumeText={resumeText} connectionData={connectionData} />
+            )}
           </div>
         </div>
       </motion.div>

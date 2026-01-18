@@ -1,36 +1,37 @@
+
 export interface ExperienceEntry {
-	Title?: string;
-	Company?: string;
-	Duration?: string;
-	Description?: string;
+	title?: string;
+	company?: string;
+	duration?: string;
+	description?: string;
 }
 
 export interface EducationEntry {
-	School?: string;
-	Degree?: string;
-	Field?: string;
-	Years?: string;
+	school?: string;
+	degree?: string;
+	field?: string;
+	years?: string;
 }
 
 export interface Profile {
-	ProfileId: string;
-	Name?: string;
-	Email?: string;
-	Location?: string;
-	Headline?: string;
-	About?: string;
-	RoleCurrent?: string;
-	CurrentCompany?: string;
-	Industry?: string;
-	YearsExperience?: number;
-	SeniorityLevel?: string;
-	Skills?: string[];
-	Experience?: ExperienceEntry[];
-	Education?: EducationEntry[];
-	Connections?: number;
-	Goals?: string[];
-	Needs?: string[];
-	CanOffer?: string[];
-	RemotePreference?: string;
-	Source?: string;
+	profileId: string;
+	name?: string;
+	email?: string;
+	location?: string;
+	headline?: string;
+	about?: string;
+	roleCurrent?: string;
+	currentCompany?: string;
+	industry?: string;
+	yearsExperience?: number;
+	seniorityLevel?: string;
+	skills?: string[];
+	experience?: ExperienceEntry[];
+	education?: EducationEntry[];
+	connections?: number;
+	goals?: string[];
+	needs?: string[];
+	canOffer?: string[];
+	remotePreference?: string;
+	source?: string;
 }

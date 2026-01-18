@@ -280,12 +280,7 @@ export default function InfoForm({ onConnectionsDataReady }: InfoFormProps) {
         variant="solid"
         colorScheme="primary"
         size="lg"
-        onClick={() => {
-          const formElement = document.querySelector('form');
-          if (formElement) {
-            formElement.dispatchEvent(new Event('submit', { bubbles: true }));
-          }
-        }}
+        type="submit"
         loading={isLoading}
         customStyles={{ width: '100%', marginTop: '16px' }}
       >

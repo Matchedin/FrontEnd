@@ -1,18 +1,15 @@
 'use client';
 
-
+import { Profile } from '@/types/profile';
 import React, { useState } from 'react';
 
-interface ConnectionTypesProps {
-  industryMatches: Record<string, number>; // percent match per industry
-}
 
 export default function ConnectionTypes({ industryMatches }: ConnectionTypesProps) {
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
-  const [industryUsers, setIndustryUsers] = useState<any[]>([]);
+  const [industryUsers, setIndustryUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
 
-  if (!industryMatches || Object.keys(industryMatches).length === 0) {
+  if (!industryMatches) {
     return (
       <div style={{
         padding: '24px',
@@ -32,6 +29,8 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
   const sortedIndustries = Object.entries(industryMatches)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 8); // Top 8 industries
+
+  const maxPercent = sortedIndustries.length > 0 ? sortedIndustries[0][1] : 100;
 
   const handleIndustryClick = async (industry: string) => {
     setSelectedIndustry(industry);
@@ -57,7 +56,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
       boxShadow: '0 4px 16px rgba(69, 103, 204, 0.07)',
       alignItems: 'flex-start'
     }}>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         <h2 style={{
           fontSize: '1.5rem',
           fontWeight: 'bold',
@@ -81,7 +80,8 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '16px'
+          gap: '16px',
+          overflowY: 'hidden',
         }}>
           {sortedIndustries.length > 0 ? (
             sortedIndustries.map(([industry, percent], i) => (
@@ -113,7 +113,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   marginBottom: '8px'
-                }}>{percent}%</div>
+                }}>{((percent / maxPercent) * 100).toFixed(1)}%</div>
                 <div style={{
                   height: '4px',
                   background: 'rgba(69, 103, 204, 0.13)',
@@ -122,7 +122,7 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
                 }}>
                   <div style={{
                     height: '100%',
-                    width: `${percent}%`,
+                    width: `${((percent / maxPercent) * 100).toFixed(1)}%`,
                     background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
                     transition: 'width 0.5s ease-out'
                   }} />
@@ -148,18 +148,80 @@ export default function ConnectionTypes({ industryMatches }: ConnectionTypesProp
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+          <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
             {industryUsers.length > 0 ? (
-              industryUsers.map((user: any) => (
-                <div key={user.ProfileId} style={{ marginBottom: '12px', padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.07)' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--foreground)' }}>{user.Name || 'Unnamed'}</div>
-                  <div style={{ fontSize: '0.95rem', color: 'rgba(32,32,32,0.7)' }}>{user.Headline || user.RoleCurrent || ''}</div>
-                  <div style={{ fontSize: '0.9rem', color: 'rgba(32,32,32,0.6)' }}>{user.CurrentCompany || ''}</div>
+              industryUsers.map((user: Profile) => (
+                <div
+                  key={user.profileId}
+                  style={{
+                    marginBottom: '16px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(139, 92, 246, 0.15)',
+                    boxShadow: '0 2px 8px rgba(139, 92, 246, 0.08)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.15)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.08)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139, 92, 246, 0.15)';
+                  }}
+                >
+                  <div style={{
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    color: 'var(--foreground)',
+                    marginBottom: '6px',
+                    background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>
+                    {user.name || 'Unnamed User'}
+                  </div>
+                  <div style={{
+                    fontSize: '0.95rem',
+                    color: 'rgba(32, 32, 32, 0.8)',
+                    marginBottom: '4px',
+                    fontWeight: '500',
+                    lineHeight: '1.4'
+                  }}>
+                    {user.headline || user.roleCurrent || 'Professional'}
+                  </div>
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: 'rgba(32, 32, 32, 0.6)',
+                    fontWeight: '400'
+                  }}>
+                    {user.currentCompany ? `🏢 ${user.currentCompany}` : 'Company not specified'}
+                  </div>
+                  {user.location && (
+                    <div style={{
+                      fontSize: '0.8rem',
+                      color: 'rgba(32, 32, 32, 0.5)',
+                      marginTop: '4px'
+                    }}>
+                      📍 {user.location}
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
-              <div style={{ color: 'rgba(32,32,32,0.6)' }}>
-                {selectedIndustry ? 'No users found in this industry.' : 'No industry selected.'}
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: 'rgba(32, 32, 32, 0.6)',
+                fontSize: '1rem'
+              }}>
+                {selectedIndustry ? 'No users found in this industry.' : 'Select an industry to view users.'}
               </div>
             )}
           </div>
