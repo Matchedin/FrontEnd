@@ -18,6 +18,7 @@ export default function ResumeReview() {
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   // Load resume from temp folder on mount
   useEffect(() => {
@@ -41,6 +42,35 @@ export default function ResumeReview() {
 
     loadResumeFromTemp();
   }, []);
+
+  // Timer for dynamic button text
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isReviewing) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isReviewing]);
+
+  const getButtonText = () => {
+    if (!isReviewing) return 'Get Review';
+    
+    const messages = [
+      'Analyzing Resume...',
+      'Extracting Content...',
+      'Checking Structure...',
+      'Generating Feedback...',
+      'Polishing Recommendations...'
+    ];
+    
+    const messageIndex = Math.floor(elapsedTime / 2) % messages.length;
+    return messages[messageIndex];
+  };
+
 
   return (
     <div>
@@ -128,6 +158,7 @@ export default function ResumeReview() {
           <button
             onClick={async () => {
               setIsReviewing(true);
+              setElapsedTime(0);
               setError('');
 
               try {
@@ -232,7 +263,7 @@ export default function ResumeReview() {
               }
             }}
           >
-            {isReviewing ? 'Analyzing...' : 'Get Review'}
+            {isLoading ? 'Loading Resume...' : getButtonText()}
           </button>
         </div>
       ) : (
