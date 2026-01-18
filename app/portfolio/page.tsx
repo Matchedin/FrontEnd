@@ -16,7 +16,17 @@ export default function PortfolioPage() {
   const [connectionData, setConnectionData] = useState<ConnectionData[]>([]);
   const [resumeText, setResumeText] = useState('');
   const [userInfo, setUserInfo] = useState<{ name: string; school: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'network' | 'insights'>('network');
+  const [hasData, setHasData] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+
+  // Check for user data on client-side mount
+  useEffect(() => {
+    const userInfoStr = sessionStorage.getItem('userInfo');
+    const hasUserInfo = !!userInfoStr;
+    console.log('Portfolio checking - userInfo exists:', hasUserInfo);
+    setHasData(hasUserInfo);
+    setIsChecked(true);
+  }, []);
 
   // Load session storage data
   // eslint-disable-next-line react-hooks/set-state-in-effect
