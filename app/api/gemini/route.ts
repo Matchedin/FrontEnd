@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiUrl = process.env.SSE_BASE_URL + '/gemini/coldEmail';
+    const apiUrl = process.env.NEXT_PUBLIC_SSE_BASE_URL + '/gemini/coldEmail';
     console.log('Calling API:', apiUrl);
     console.log('Profile:', profileJson);
     console.log('Resume text length:', resumeText.length, 'characters');

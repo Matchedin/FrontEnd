@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const backendFormData = new FormData();
     backendFormData.append('file', file, file.name);
 
-    const apiUrl = process.env.SSE_BASE_URL + '/Match/resume';
+    const apiUrl = process.env.NEXT_PUBLIC_SSE_BASE_URL + '/Match/resume';
     
     const response = await fetch(apiUrl, {
       method: 'POST',
